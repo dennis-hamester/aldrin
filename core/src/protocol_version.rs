@@ -32,7 +32,7 @@ impl ProtocolVersion {
 }
 
 impl fmt::Display for ProtocolVersion {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.major(), self.minor())
     }
 }

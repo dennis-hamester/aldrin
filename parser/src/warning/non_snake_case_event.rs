@@ -12,7 +12,7 @@ pub(crate) struct NonSnakeCaseEvent {
 }
 
 impl NonSnakeCaseEvent {
-    pub(crate) fn validate(ev: &EventDef, validate: &mut Validate) {
+    pub(crate) fn validate(ev: &EventDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(ev.name().value()) {
             return;
         }

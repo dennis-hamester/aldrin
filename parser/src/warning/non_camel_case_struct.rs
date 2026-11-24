@@ -12,7 +12,7 @@ pub(crate) struct NonCamelCaseStruct {
 }
 
 impl NonCamelCaseStruct {
-    pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate) {
+    pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(struct_def.name().value()) {
             return;
         }

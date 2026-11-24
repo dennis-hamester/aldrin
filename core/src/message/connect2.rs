@@ -63,13 +63,13 @@ enum_with_repr! {
 }
 
 impl Serialize<Self> for ConnectData {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<ConnectData> for &ConnectData {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer
@@ -80,7 +80,7 @@ impl Serialize<ConnectData> for &ConnectData {
 }
 
 impl Deserialize<Self> for ConnectData {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut user = None;

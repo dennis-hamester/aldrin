@@ -71,7 +71,7 @@ pub(crate) enum MessageType {
 }
 
 impl fmt::Display for MessageType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Self::AbortFunctionCall => f.pad("abort-function-call"),
             Self::AddBusListenerFilter => f.pad("add-bus-listener-filter"),

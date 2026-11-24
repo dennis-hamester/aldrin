@@ -21,7 +21,7 @@ where
     U: Serialize<T>,
     I: IntoIterator<Item = (L, U)>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(self.0)
     }
 }
@@ -34,7 +34,7 @@ where
     U: Serialize<T>,
     &'a I: IntoIterator<Item = (L, U)>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(&self.0)
     }
 }

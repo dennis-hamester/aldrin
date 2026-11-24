@@ -50,7 +50,7 @@ impl<T> PendingSender<T> {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -90,7 +90,7 @@ impl<T> PendingSender<T> {
     ///
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
-    pub fn poll_wait_established(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_wait_established(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.inner.poll_wait_established(cx)
     }
 
@@ -141,7 +141,7 @@ impl<T> PendingSender<T> {
 }
 
 impl<T> fmt::Debug for PendingSender<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PendingSender")
             .field("inner", &self.inner)
             .finish()
@@ -193,7 +193,7 @@ impl<T> PendingReceiver<T> {
     /// Initiates closing the receiver and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -233,7 +233,7 @@ impl<T> PendingReceiver<T> {
     ///
     /// Note that this method does not indicate errors. You must use [`establish`](Self::establish)
     /// to check whether the channel was successfully established.
-    pub fn poll_wait_established(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_wait_established(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.inner.poll_wait_established(cx)
     }
 
@@ -284,7 +284,7 @@ impl<T> PendingReceiver<T> {
 }
 
 impl<T> fmt::Debug for PendingReceiver<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PendingReceiver")
             .field("inner", &self.inner)
             .finish()

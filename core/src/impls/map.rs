@@ -19,7 +19,7 @@ where
     T: Tag,
     U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(self)
     }
 }
@@ -31,7 +31,7 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(self)
     }
 }
@@ -44,7 +44,7 @@ where
     U: Deserialize<T>,
     S: Default + BuildHasher,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
     }
 }
@@ -63,7 +63,7 @@ where
         LexicalId::map(K::lexical_id(), V::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<K>();
         references.add::<V>();
     }
@@ -80,7 +80,7 @@ where
     T: Tag,
     U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(self)
     }
 }
@@ -92,7 +92,7 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2_iter(self)
     }
 }
@@ -104,7 +104,7 @@ where
     T: Tag,
     U: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map_extend_new()
     }
 }
@@ -119,26 +119,26 @@ impl<K: Introspectable, V: Introspectable> Introspectable for BTreeMap<K, V> {
         LexicalId::map(K::lexical_id(), V::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<K>();
         references.add::<V>();
     }
 }
 
 impl<K: KeyTag, T: Tag> Serialize<Map<K, T>> for () {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2::<K>()?.finish()
     }
 }
 
 impl<K: KeyTag, T: Tag> Serialize<Map<K, T>> for &() {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_map2::<K>()?.finish()
     }
 }
 
 impl<K: KeyTag, T: Tag> Deserialize<Map<K, T>> for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_map::<K>()?.finish(())
     }
 }

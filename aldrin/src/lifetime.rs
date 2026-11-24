@@ -102,13 +102,13 @@ impl PrimaryTag for LifetimeScope {
 }
 
 impl Serialize<tags::ObjectId> for LifetimeScope {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<tags::ObjectId> for &LifetimeScope {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(self.id())
     }
 }
@@ -123,7 +123,7 @@ impl Introspectable for LifetimeScope {
         LifetimeId::lexical_id()
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         LifetimeId::add_references(references);
     }
 }
@@ -158,19 +158,19 @@ impl PrimaryTag for LifetimeId {
 }
 
 impl Serialize<tags::ObjectId> for LifetimeId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(self.0)
     }
 }
 
 impl Serialize<tags::ObjectId> for &LifetimeId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<tags::ObjectId> for LifetimeId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize().map(Self)
     }
 }
@@ -185,7 +185,7 @@ impl Introspectable for LifetimeId {
         LexicalId::LIFETIME
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 impl From<ObjectId> for LifetimeId {
@@ -237,7 +237,7 @@ impl Lifetime {
     }
 
     /// Poll whether the associated scope has ended.
-    pub fn poll_ended(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_ended(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         let Some(ref mut listener) = self.listener else {
             return Poll::Ready(());
         };
@@ -274,8 +274,9 @@ impl Lifetime {
                 }
 
                 BusListenerEvent::Stopped
-                | BusListenerEvent::Event(BusEvent::ServiceCreated(_))
-                | BusListenerEvent::Event(BusEvent::ServiceDestroyed(_)) => unreachable!(),
+                | BusListenerEvent::Event(
+                    BusEvent::ServiceCreated(_) | BusEvent::ServiceDestroyed(_),
+                ) => unreachable!(),
             }
         }
 
@@ -300,7 +301,7 @@ impl Lifetime {
 impl Future for Lifetime {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<()> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {
         self.poll_ended(cx)
     }
 }
@@ -346,7 +347,7 @@ impl LifetimeListener {
         &self.client
     }
 
-    fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<BusListenerEvent>> {
+    fn poll_next_event(&mut self, cx: &mut Context<'_>) -> Poll<Option<BusListenerEvent>> {
         Pin::new(&mut self.events).poll_next(cx)
     }
 }

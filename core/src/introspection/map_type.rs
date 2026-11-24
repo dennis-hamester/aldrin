@@ -48,7 +48,7 @@ impl PrimaryTag for MapType {
 }
 
 impl Serialize<Self> for MapType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<TypeId>(MapTypeField::Key, self.key)?;
@@ -59,13 +59,13 @@ impl Serialize<Self> for MapType {
 }
 
 impl Serialize<MapType> for &MapType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<Self> for MapType {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut key = None;

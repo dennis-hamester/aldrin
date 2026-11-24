@@ -20,7 +20,7 @@ pub struct EnumDef {
 }
 
 impl EnumDef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::enum_def);
 
         let span = Span::from_pair(&pair);
@@ -58,7 +58,7 @@ impl EnumDef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         DuplicateEnumVariant::validate(
             &self.vars,
             self.fallback.as_ref(),
@@ -130,7 +130,7 @@ pub struct InlineEnum {
 }
 
 impl InlineEnum {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::enum_inline);
 
         let span = Span::from_pair(&pair);
@@ -165,7 +165,7 @@ impl InlineEnum {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         DuplicateEnumVariant::validate(&self.vars, self.fallback.as_ref(), None, validate);
         DuplicateEnumVariantId::validate(&self.vars, None, validate);
@@ -223,7 +223,7 @@ pub struct EnumVariant {
 }
 
 impl EnumVariant {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::enum_variant);
 
         let span = Span::from_pair(&pair);
@@ -261,7 +261,7 @@ impl EnumVariant {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         InvalidEnumVariantId::validate(self, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
@@ -307,7 +307,7 @@ pub struct EnumFallback {
 }
 
 impl EnumFallback {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::enum_fallback);
 
         let span = Span::from_pair(&pair);
@@ -322,7 +322,7 @@ impl EnumFallback {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         NonCamelCaseEnumVariant::validate(&self.name, validate);
 

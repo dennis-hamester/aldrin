@@ -99,7 +99,7 @@ impl AsyncTransport for Bounded {
 
     fn receive_poll(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Message, Disconnected>> {
         match Pin::new(&mut self.receiver).poll_next(cx) {
             Poll::Ready(Some(msg)) => Poll::Ready(Ok(msg)),
@@ -110,7 +110,7 @@ impl AsyncTransport for Bounded {
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
             Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
@@ -125,7 +125,7 @@ impl AsyncTransport for Bounded {
 
     fn send_poll_flush(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
             Poll::Ready(_) => Poll::Ready(Ok(())),
@@ -166,7 +166,7 @@ impl AsyncTransport for Unbounded {
 
     fn receive_poll(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Message, Disconnected>> {
         match Pin::new(&mut self.receiver).poll_next(cx) {
             Poll::Ready(Some(msg)) => Poll::Ready(Ok(msg)),
@@ -175,7 +175,10 @@ impl AsyncTransport for Unbounded {
         }
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+    fn send_poll_ready(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
             Poll::Ready(Ok(())) => Poll::Ready(Ok(())),
             Poll::Ready(Err(_)) => Poll::Ready(Err(Disconnected)),
@@ -187,7 +190,10 @@ impl AsyncTransport for Unbounded {
         self.sender.start_send(msg).map_err(|_| Disconnected)
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Disconnected>> {
+    fn send_poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Disconnected>> {
         match self.sender.poll_ready(cx) {
             Poll::Ready(_) => Poll::Ready(Ok(())),
             Poll::Pending => Poll::Pending,

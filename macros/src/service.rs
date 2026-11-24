@@ -411,7 +411,7 @@ impl Service {
 }
 
 impl Parse for Service {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let options = input.parse()?;
         let vis = input.parse()?;
         input.parse::<kw::service>()?;

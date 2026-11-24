@@ -305,7 +305,7 @@ async fn get_bookmarks(id: Option<ObjectUuid>, bus: &Handle) -> Result<Bookmarks
 }
 
 impl fmt::Display for BookmarkError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidName => write!(f, "invalid name"),
             Self::DuplicateName => write!(f, "duplicate name"),

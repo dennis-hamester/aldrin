@@ -16,13 +16,13 @@ impl PrimaryTag for Old {
 }
 
 impl Serialize<tags::Value> for Old {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Value>(&self)
     }
 }
 
 impl Serialize<tags::Value> for &Old {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(1u32, &self.field1)?;
@@ -33,7 +33,7 @@ impl Serialize<tags::Value> for &Old {
 }
 
 impl Deserialize<tags::Value> for Old {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut field1 = None;
@@ -66,13 +66,13 @@ impl PrimaryTag for New {
 }
 
 impl Serialize<tags::Value> for New {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Value>(&self)
     }
 }
 
 impl Serialize<tags::Value> for &New {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(1u32, &self.field1)?;
@@ -84,7 +84,7 @@ impl Serialize<tags::Value> for &New {
 }
 
 impl Deserialize<tags::Value> for New {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut field1 = None;

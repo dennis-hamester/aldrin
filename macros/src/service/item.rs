@@ -58,7 +58,7 @@ impl ServiceItem {
         }
     }
 
-    fn parse_ev(input: ParseStream) -> Result<Self> {
+    fn parse_ev(input: ParseStream<'_>) -> Result<Self> {
         let begin = input.fork();
         begin.call(Attribute::parse_outer)?;
 
@@ -75,7 +75,7 @@ impl ServiceItem {
         }
     }
 
-    fn parse_fn(input: ParseStream) -> Result<Self> {
+    fn parse_fn(input: ParseStream<'_>) -> Result<Self> {
         let begin = input.fork();
         begin.call(Attribute::parse_outer)?;
 
@@ -94,7 +94,7 @@ impl ServiceItem {
 }
 
 impl Parse for ServiceItem {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let begin = input.fork();
         begin.call(Attribute::parse_outer)?;
 

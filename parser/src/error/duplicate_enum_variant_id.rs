@@ -14,7 +14,11 @@ pub(crate) struct DuplicateEnumVariantId {
 }
 
 impl DuplicateEnumVariantId {
-    pub(crate) fn validate(vars: &[EnumVariant], ident: Option<&Ident>, validate: &mut Validate) {
+    pub(crate) fn validate(
+        vars: &[EnumVariant],
+        ident: Option<&Ident>,
+        validate: &mut Validate<'_>,
+    ) {
         let mut max_id = vars
             .iter()
             .filter_map(|var| var.id().value().parse().ok())

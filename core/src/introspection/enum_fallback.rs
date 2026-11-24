@@ -50,13 +50,13 @@ impl PrimaryTag for EnumFallback {
 }
 
 impl Serialize<Self> for EnumFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<EnumFallback> for &EnumFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(EnumFallbackField::Name, &self.name)?;
@@ -69,7 +69,7 @@ impl Serialize<EnumFallback> for &EnumFallback {
 }
 
 impl Deserialize<Self> for EnumFallback {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut name = None;

@@ -15,7 +15,6 @@ use aldrin_core::{
 };
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
-use std::mem;
 use std::time::Duration;
 use tokio::time;
 
@@ -35,7 +34,7 @@ async fn disconnect_during_function_call() {
     let mut client2 = broker.add_client().await;
     let proxy = Proxy::new(&client2, svc.id()).await.unwrap();
     let reply = proxy.call(0, (), None);
-    mem::drop(reply);
+    drop(reply);
     client2.join().await;
 
     let call = svc.next_call().await.unwrap();
@@ -77,7 +76,7 @@ async fn drop_conn_before_function_call() {
     let svc = select_first(svc, &mut conn1_fut).await.unwrap();
 
     // This will cause all subsequent sends in the broker to fail.
-    mem::drop(conn1_fut);
+    drop(conn1_fut);
 
     // Calling a function on conn1 must not deadlock, but be immediately replied to with an error.
     let proxy = Proxy::new(&client2, svc.id()).await.unwrap();

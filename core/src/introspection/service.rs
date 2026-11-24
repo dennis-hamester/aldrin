@@ -134,13 +134,13 @@ impl PrimaryTag for Service {
 }
 
 impl Serialize<Self> for Service {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<Service> for &Service {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(ServiceField::Schema, &self.schema)?;
@@ -171,7 +171,7 @@ impl Serialize<Service> for &Service {
 }
 
 impl Deserialize<Self> for Service {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut schema = None;

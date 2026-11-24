@@ -15,7 +15,7 @@ pub struct TypeName {
 }
 
 impl TypeName {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::type_name);
 
         let span = Span::from_pair(&pair);
@@ -27,7 +27,7 @@ impl TypeName {
         Self { span, kind }
     }
 
-    pub(crate) fn validate(&self, is_key_type: bool, validate: &mut Validate) {
+    pub(crate) fn validate(&self, is_key_type: bool, validate: &mut Validate<'_>) {
         self.kind.validate(is_key_type, validate);
     }
 
@@ -74,7 +74,7 @@ pub enum TypeNameKind {
 }
 
 impl TypeNameKind {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::kw_bool => Self::Bool,
@@ -199,7 +199,7 @@ impl TypeNameKind {
         }
     }
 
-    fn validate(&self, is_key_type: bool, validate: &mut Validate) {
+    fn validate(&self, is_key_type: bool, validate: &mut Validate<'_>) {
         match self {
             Self::Option(ty)
             | Self::Box(ty)
@@ -259,7 +259,7 @@ impl TypeNameKind {
 }
 
 impl fmt::Display for TypeNameKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Bool => write!(f, "bool"),
             Self::U8 => write!(f, "u8"),

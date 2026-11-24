@@ -50,7 +50,7 @@ impl<T> Sender<T> {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -95,7 +95,7 @@ impl<T> Sender<T> {
     /// This is different from [`poll_close`](Self::poll_close) (and [`close`](Self::close) in that
     /// this method does not close the channel from the sender's side, but merely checks whether the
     /// receiver has done so.
-    pub fn poll_receiver_closed(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_receiver_closed(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.inner.poll_receiver_closed(cx)
     }
 
@@ -134,7 +134,7 @@ impl<T> Sender<T> {
     /// Polls the channel for capacity to send at least one item.
     ///
     /// See [`send_ready`](Self::send_ready) for more information.
-    pub fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_send_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_send_ready(cx)
     }
 
@@ -205,7 +205,7 @@ where
 }
 
 impl<T> fmt::Debug for Sender<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Sender")
             .field("inner", &self.inner)
             .finish()
@@ -216,7 +216,7 @@ impl<T> fmt::Debug for Sender<T> {
 impl<T: PrimaryTag, U: Serialize<T::Tag>> Sink<U> for Sender<T> {
     type Error = Error;
 
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.poll_send_ready(cx)
     }
 
@@ -224,11 +224,11 @@ impl<T: PrimaryTag, U: Serialize<T::Tag>> Sink<U> for Sender<T> {
         self.start_send_item(item)
     }
 
-    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut self.inner).poll_flush(cx)
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Self::poll_close(&mut self, cx)
     }
 }
@@ -274,7 +274,7 @@ impl<T> Receiver<T> {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -328,7 +328,7 @@ impl<T: PrimaryTag> Receiver<T> {
     /// Polls the channel for the next item.
     pub fn poll_next_item_as<U: Deserialize<T::Tag>>(
         &mut self,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Option<U>, Error>> {
         self.inner.poll_next_item_as(cx)
     }
@@ -341,7 +341,7 @@ impl<T: PrimaryTag> Receiver<T> {
 
 impl<T: DeserializePrimary> Receiver<T> {
     /// Polls the channel for the next item.
-    pub fn poll_next_item(&mut self, cx: &mut Context) -> Poll<Result<Option<T>, Error>> {
+    pub fn poll_next_item(&mut self, cx: &mut Context<'_>) -> Poll<Result<Option<T>, Error>> {
         self.poll_next_item_as(cx)
     }
 
@@ -352,7 +352,7 @@ impl<T: DeserializePrimary> Receiver<T> {
 }
 
 impl<T> fmt::Debug for Receiver<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Receiver")
             .field("inner", &self.inner)
             .finish()
@@ -362,7 +362,7 @@ impl<T> fmt::Debug for Receiver<T> {
 impl<T: DeserializePrimary> Stream for Receiver<T> {
     type Item = Result<T, Error>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         self.poll_next_item(cx).map(Result::transpose)
     }
 

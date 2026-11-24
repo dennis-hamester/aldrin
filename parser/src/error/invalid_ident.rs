@@ -11,7 +11,7 @@ pub(crate) struct InvalidIdent {
 }
 
 impl InvalidIdent {
-    pub(crate) fn validate(ident: &Ident, validate: &mut Validate) {
+    pub(crate) fn validate(ident: &Ident, validate: &mut Validate<'_>) {
         if Ident::is_valid(ident.value()) {
             return;
         }

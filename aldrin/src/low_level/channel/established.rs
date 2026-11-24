@@ -58,7 +58,7 @@ impl Sender {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.capacity_added.close();
         self.inner.poll_close(cx)
     }
@@ -104,7 +104,7 @@ impl Sender {
     /// This is different from [`poll_close`](Self::poll_close) (and [`close`](Self::close) in that
     /// this method does not close the channel from the sender's side, but merely checks whether the
     /// receiver has done so.
-    pub fn poll_receiver_closed(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_receiver_closed(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         loop {
             match Pin::new(&mut self.capacity_added).poll_next(cx) {
                 Poll::Ready(Some(added_capacity)) => self.capacity += added_capacity,
@@ -149,7 +149,7 @@ impl Sender {
     /// Polls the channel for capacity to send at least one item.
     ///
     /// See [`send_ready`](Self::send_ready) for more information.
-    pub fn poll_send_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_send_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         loop {
             match Pin::new(&mut self.capacity_added).poll_next(cx) {
                 Poll::Ready(Some(added_capacity)) => self.capacity += added_capacity,
@@ -227,7 +227,7 @@ impl Sender {
 impl Sink<SerializedValue> for Sender {
     type Error = Error;
 
-    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_ready(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.poll_send_ready(cx)
     }
 
@@ -235,7 +235,7 @@ impl Sink<SerializedValue> for Sender {
         self.start_send_serialized(item)
     }
 
-    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         if self.inner.is_open() {
             Poll::Ready(Ok(()))
         } else {
@@ -243,7 +243,7 @@ impl Sink<SerializedValue> for Sender {
         }
     }
 
-    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn poll_close(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         Self::poll_close(&mut self, cx)
     }
 }
@@ -293,7 +293,7 @@ impl Receiver {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.items.close();
         self.inner.poll_close(cx)
     }
@@ -344,7 +344,7 @@ impl Receiver {
     }
 
     /// Polls the channel for the next item.
-    pub fn poll_next_serialized(&mut self, cx: &mut Context) -> Poll<Option<SerializedValue>> {
+    pub fn poll_next_serialized(&mut self, cx: &mut Context<'_>) -> Poll<Option<SerializedValue>> {
         debug_assert!(self.cur_capacity > 0);
         debug_assert!(self.cur_capacity <= self.max_capacity.get());
 
@@ -377,7 +377,7 @@ impl Receiver {
     /// Polls the channel for the next item.
     pub fn poll_next_item_as<T: Tag, U: Deserialize<T>>(
         &mut self,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Option<U>, Error>> {
         match self.poll_next_serialized(cx) {
             Poll::Ready(Some(item)) => {
@@ -397,7 +397,7 @@ impl Receiver {
     /// Polls the channel for the next item.
     pub fn poll_next_item<T: DeserializePrimary>(
         &mut self,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Option<T>, Error>> {
         self.poll_next_item_as(cx)
     }
@@ -411,7 +411,7 @@ impl Receiver {
 impl Stream for Receiver {
     type Item = SerializedValue;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         self.poll_next_serialized(cx)
     }
 

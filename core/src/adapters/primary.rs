@@ -12,7 +12,7 @@ impl<T: PrimaryTag> PrimaryTag for AsPrimary<T> {
 }
 
 impl<T: SerializePrimary> Serialize<T::Tag> for AsPrimary<T> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(self.0)
     }
 }
@@ -22,13 +22,13 @@ where
     T: PrimaryTag,
     &'a T: Serialize<T::Tag>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self.0)
     }
 }
 
 impl<T: DeserializePrimary> Deserialize<T::Tag> for AsPrimary<T> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize().map(Self)
     }
 }

@@ -15,7 +15,7 @@ pub(crate) struct UnusedImport {
 }
 
 impl UnusedImport {
-    pub(crate) fn validate(import: &ImportStmt, validate: &mut Validate) {
+    pub(crate) fn validate(import: &ImportStmt, validate: &mut Validate<'_>) {
         if Self::visit_schema(validate.get_current_schema(), import.schema_name()) {
             return;
         }

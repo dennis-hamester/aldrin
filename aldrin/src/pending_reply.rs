@@ -52,7 +52,7 @@ impl<T, E> PendingReply<T, E> {
 
 impl<T: PrimaryTag, E: PrimaryTag> PendingReply<T, E> {
     /// Polls for the reply.
-    pub fn poll_reply_as<U, F>(&mut self, cx: &mut Context) -> Poll<Result<Reply<U, F>, Error>>
+    pub fn poll_reply_as<U, F>(&mut self, cx: &mut Context<'_>) -> Poll<Result<Reply<U, F>, Error>>
     where
         U: Deserialize<T::Tag>,
         F: Deserialize<E::Tag>,
@@ -72,13 +72,13 @@ impl<T: PrimaryTag, E: PrimaryTag> PendingReply<T, E> {
 impl<T: DeserializePrimary, E: DeserializePrimary> Future for PendingReply<T, E> {
     type Output = Result<Reply<T, E>, Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         self.poll_reply_as(cx)
     }
 }
 
 impl<T, E> fmt::Debug for PendingReply<T, E> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PendingReply")
             .field("inner", &self.inner)
             .finish()

@@ -202,9 +202,7 @@ where
                 Selected::Broker(Some(_)) | Selected::Transport(Ok(_)) => {}
                 Selected::Broker(None) => self.recv = None,
 
-                Selected::TransportFlushed(Ok(()))
-                | Selected::Transport(Err(_))
-                | Selected::TransportFlushed(Err(_)) => {
+                Selected::TransportFlushed(Ok(()) | Err(_)) | Selected::Transport(Err(_)) => {
                     self.transport = None;
                     self.flush_transport = false;
                 }

@@ -81,7 +81,7 @@ pub struct RustOutput {
 pub(crate) fn generate(
     parser: &Parser,
     options: &Options,
-    rust_options: &RustOptions,
+    rust_options: &RustOptions<'_>,
 ) -> Result<RustOutput, Error> {
     let schema = parser.main_schema();
 
@@ -1114,14 +1114,15 @@ impl RustGenerator<'_> {
         options.extension.tasklist = true;
         options.parse.smart = true;
 
-        options.parse.broken_link_callback = Some(Arc::new(move |link: BrokenLinkReference| {
-            resolver
-                .convert_broken_link_if_valid(link.original)
-                .map(|link| ResolvedReference {
-                    url: link.to_owned(),
-                    title: String::new(),
-                })
-        }));
+        options.parse.broken_link_callback =
+            Some(Arc::new(move |link: BrokenLinkReference<'_>| {
+                resolver
+                    .convert_broken_link_if_valid(link.original)
+                    .map(|link| ResolvedReference {
+                        url: link.to_owned(),
+                        title: String::new(),
+                    })
+            }));
 
         let arena = Arena::new();
         let root = comrak::parse_document(&arena, doc, &options);
@@ -1602,7 +1603,7 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn doc_link_base(schema: &Schema, resolver: LinkResolver) -> String {
+    fn doc_link_base(schema: &Schema, resolver: LinkResolver<'_>) -> String {
         if schema.name() == resolver.schema().name() {
             String::new()
         } else {
@@ -1610,7 +1611,11 @@ impl RustGenerator<'_> {
         }
     }
 
-    fn doc_link_components(schema: &Schema, resolver: LinkResolver, components: &[&str]) -> String {
+    fn doc_link_components(
+        schema: &Schema,
+        resolver: LinkResolver<'_>,
+        components: &[&str],
+    ) -> String {
         let mut link = Self::doc_link_base(schema, resolver);
 
         for (i, component) in components.iter().enumerate() {

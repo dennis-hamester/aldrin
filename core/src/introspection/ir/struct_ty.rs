@@ -62,7 +62,7 @@ impl PrimaryTag for StructIr {
 }
 
 impl Serialize<StructIr> for &StructIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(StructField::Schema, &self.schema)?;

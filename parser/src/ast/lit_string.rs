@@ -9,7 +9,7 @@ pub struct LitString {
 }
 
 impl LitString {
-    pub(crate) fn parse(pair: &Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: &Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::lit_string);
 
         Self {

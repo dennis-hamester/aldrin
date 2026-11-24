@@ -59,7 +59,7 @@ impl SerializeKey<tags::String> for String {
 }
 
 impl DeserializeKey<tags::String> for String {
-    fn try_from_key(key: Cow<str>) -> Result<Self, DeserializeError> {
+    fn try_from_key(key: Cow<'_, str>) -> Result<Self, DeserializeError> {
         Ok(key.into_owned())
     }
 }

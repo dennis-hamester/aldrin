@@ -25,7 +25,7 @@ pub struct ServiceDef {
 }
 
 impl ServiceDef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::service_def);
 
         let span = Span::from_pair(&pair);
@@ -84,7 +84,7 @@ impl ServiceDef {
         }
     }
 
-    fn parse_uuid(pair: Pair<Rule>) -> (Vec<Comment>, LitUuid) {
+    fn parse_uuid(pair: Pair<'_, Rule>) -> (Vec<Comment>, LitUuid) {
         assert_eq!(pair.as_rule(), Rule::service_uuid);
 
         let mut pairs = pair.into_inner();
@@ -97,7 +97,7 @@ impl ServiceDef {
         (prelude.take_comment(), LitUuid::parse(&pair))
     }
 
-    fn parse_version(pair: Pair<Rule>) -> (Vec<Comment>, LitInt) {
+    fn parse_version(pair: Pair<'_, Rule>) -> (Vec<Comment>, LitInt) {
         assert_eq!(pair.as_rule(), Rule::service_version);
 
         let mut pairs = pair.into_inner();
@@ -110,7 +110,7 @@ impl ServiceDef {
         (prelude.take_comment(), LitInt::parse(&pair))
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         InvalidServiceVersion::validate(self, validate);
         DuplicateServiceItem::validate(self, validate);
@@ -186,7 +186,7 @@ pub enum ServiceItem {
 }
 
 impl ServiceItem {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::service_item);
 
         let mut pairs = pair.into_inner();
@@ -200,7 +200,7 @@ impl ServiceItem {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         match self {
             Self::Function(i) => i.validate(validate),
             Self::Event(i) => i.validate(validate),
@@ -256,7 +256,7 @@ pub struct FunctionDef {
 }
 
 impl FunctionDef {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::fn_def);
 
         let span = Span::from_pair(&pair);
@@ -301,7 +301,7 @@ impl FunctionDef {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseFunction::validate(self, validate);
         InvalidFunctionId::validate(self, validate);
@@ -362,7 +362,7 @@ pub struct FunctionPart {
 }
 
 impl FunctionPart {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         let span = Span::from_pair(&pair);
 
         #[expect(clippy::wildcard_enum_match_arm)]
@@ -389,7 +389,7 @@ impl FunctionPart {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         self.part_type.validate(validate);
     }
 
@@ -417,7 +417,7 @@ pub struct EventDef {
 }
 
 impl EventDef {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::event_def);
 
         let span = Span::from_pair(&pair);
@@ -457,7 +457,7 @@ impl EventDef {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseEvent::validate(self, validate);
         InvalidEventId::validate(self, validate);
@@ -503,7 +503,7 @@ pub struct FunctionFallback {
 }
 
 impl FunctionFallback {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::fn_fallback);
 
         let span = Span::from_pair(&pair);
@@ -523,7 +523,7 @@ impl FunctionFallback {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         self.name.validate(true, validate);
 
         BrokenDocLink::validate(&self.doc, validate);
@@ -555,7 +555,7 @@ pub struct EventFallback {
 }
 
 impl EventFallback {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::event_fallback);
 
         let span = Span::from_pair(&pair);
@@ -575,7 +575,7 @@ impl EventFallback {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         self.name.validate(true, validate);
 
         BrokenDocLink::validate(&self.doc, validate);

@@ -88,13 +88,13 @@ impl PrimaryTag for Struct {
 }
 
 impl Serialize<Self> for Struct {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<Struct> for &Struct {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(StructField::Schema, &self.schema)?;
@@ -112,7 +112,7 @@ impl Serialize<Struct> for &Struct {
 }
 
 impl Deserialize<Self> for Struct {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut schema = None;

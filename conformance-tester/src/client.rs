@@ -31,8 +31,8 @@ impl Client {
         let stream = TcpStream::connect(addr)
             .timeout_at(timeout)
             .await
-            .map_err(|_| anyhow!("timeout while connecting to broker at {}", addr))?
-            .with_context(|| anyhow!("failed to connect to broker at {}", addr))?;
+            .map_err(|_| anyhow!("timeout while connecting to broker at {addr}"))?
+            .with_context(|| anyhow!("failed to connect to broker at {addr}"))?;
 
         let transport = Box::new(TokioTransport::new(stream));
 

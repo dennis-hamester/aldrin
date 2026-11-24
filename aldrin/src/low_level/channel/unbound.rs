@@ -101,19 +101,19 @@ impl PrimaryTag for UnboundSender {
 }
 
 impl<T: Tag> Serialize<tags::Sender<T>> for UnboundSender {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_sender(self.cookie)
     }
 }
 
 impl<T: Tag> Serialize<tags::Sender<T>> for &UnboundSender {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Sender<T>>(*self)
     }
 }
 
 impl<T: Tag> Deserialize<tags::Sender<T>> for UnboundSender {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(Self::new)
     }
 }
@@ -217,19 +217,19 @@ impl PrimaryTag for UnboundReceiver {
 }
 
 impl<T: Tag> Serialize<tags::Receiver<T>> for UnboundReceiver {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_receiver(self.cookie)
     }
 }
 
 impl<T: Tag> Serialize<tags::Receiver<T>> for &UnboundReceiver {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Receiver<T>>(*self)
     }
 }
 
 impl<T: Tag> Deserialize<tags::Receiver<T>> for UnboundReceiver {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(Self::new)
     }
 }

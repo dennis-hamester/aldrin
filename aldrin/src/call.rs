@@ -95,7 +95,7 @@ impl<Args, T, E> Call<Args, T, E> {
     }
 
     /// Polls whether the call was aborted by the caller.
-    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_aborted(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.promise.poll_aborted(cx)
     }
 
@@ -193,7 +193,7 @@ where
 }
 
 impl<Args: fmt::Debug, T, E> fmt::Debug for Call<Args, T, E> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Call")
             .field("args", &self.args)
             .field("promise", &self.promise)

@@ -244,7 +244,7 @@ impl EvItem {
 }
 
 impl Parse for EvItem {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let options = input.parse()?;
         input.parse::<kw::event>()?;
         let ident = input.parse::<Ident>()?;

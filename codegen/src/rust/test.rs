@@ -188,7 +188,7 @@ async fn before_derive_compat_struct() {
     }
 
     impl Serialize<tags::Value> for &OldStruct {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct1(3)?;
 
             serializer.serialize::<tags::I32>(1u32, &self.f1)?;
@@ -200,7 +200,7 @@ async fn before_derive_compat_struct() {
     }
 
     impl Deserialize<tags::Value> for OldStruct {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
 
             let mut f1 = None;
@@ -337,7 +337,7 @@ async fn before_derive_compat_enum() {
     }
 
     impl Serialize<tags::Value> for &OldEnum {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             match self {
                 OldEnum::Var1 => serializer.serialize_enum::<tags::Unit>(1u32, &()),
                 OldEnum::Var2(v) => serializer.serialize_enum::<tags::I32>(2u32, v),
@@ -347,7 +347,7 @@ async fn before_derive_compat_enum() {
     }
 
     impl Deserialize<tags::Value> for OldEnum {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
             match deserializer.id() {

@@ -12,7 +12,7 @@ pub(crate) struct NonShoutySnakeCaseConst {
 }
 
 impl NonShoutySnakeCaseConst {
-    pub(crate) fn validate(const_def: &ConstDef, validate: &mut Validate) {
+    pub(crate) fn validate(const_def: &ConstDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(const_def.name().value()) {
             return;
         }

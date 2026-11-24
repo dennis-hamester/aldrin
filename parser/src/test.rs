@@ -34,10 +34,9 @@ mod fmt_tests;
 mod issues;
 mod ui_tests;
 
-use crate::{Diagnostic, FilesystemResolver, Formatter, MemoryResolver, Parser, Renderer};
+use crate::{FilesystemResolver, Formatter, MemoryResolver, Parser, Renderer};
 use std::collections::HashSet;
-use std::fs::{self, File};
-use std::io::Read;
+use std::fs;
 use std::path::PathBuf;
 
 fn fmt_test_impl(name: &str) {
@@ -72,23 +71,25 @@ fn ui_test_impl(name: &str) {
         for entry in fs::read_dir(&base_path).unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
-            let mut file = File::open(path).unwrap();
-            let mut diag = String::new();
-            file.read_to_string(&mut diag).unwrap();
+            let diag = fs::read_to_string(path).unwrap();
             expected.insert(diag);
         }
     }
 
     let mut fail = false;
-
-    let errors = parser.errors().iter().map(|d| d as &dyn Diagnostic);
-    let warnings = parser.warnings().iter().map(|d| d as &dyn Diagnostic);
-    let others = parser.other_warnings().iter().map(|d| d as &dyn Diagnostic);
     let renderer = Renderer::new(false, true, 100);
 
-    for diag in errors.chain(warnings).chain(others) {
-        let rendered = renderer.render(diag, &parser);
+    let errors = parser.errors().iter().map(|d| renderer.render(d, &parser));
+    let warnings = parser
+        .warnings()
+        .iter()
+        .map(|d| renderer.render(d, &parser));
+    let others = parser
+        .other_warnings()
+        .iter()
+        .map(|d| renderer.render(d, &parser));
 
+    for rendered in errors.chain(warnings).chain(others) {
         if !expected.remove(&rendered) {
             eprintln!("Unexpected diagnostic:\n{rendered}\n");
             fail = true;

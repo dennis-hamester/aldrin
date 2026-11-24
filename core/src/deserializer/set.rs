@@ -190,7 +190,7 @@ impl<'a, 'b, K: KeyTag> Set1Deserializer<'a, 'b, K> {
 }
 
 impl<K> fmt::Debug for Set1Deserializer<'_, '_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Set1Deserializer");
 
         f.field("buf", &self.buf);
@@ -307,7 +307,7 @@ impl<'a, 'b, K: KeyTag> Set2Deserializer<'a, 'b, K> {
 }
 
 impl<K> fmt::Debug for Set2Deserializer<'_, '_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Set2Deserializer");
 
         f.field("buf", &self.buf);

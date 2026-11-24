@@ -39,7 +39,10 @@ where
 {
     type Error = TokioTransportError;
 
-    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<Message, Self::Error>> {
         let mut this = self.project();
 
         loop {
@@ -71,7 +74,10 @@ where
         }
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_ready(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         if self.write_buf.len() >= BACKPRESSURE_BOUNDARY {
             self.send_poll_flush(cx)
         } else {
@@ -95,7 +101,10 @@ where
         Ok(())
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         let mut this = self.project();
 
         while !this.write_buf.is_empty() {

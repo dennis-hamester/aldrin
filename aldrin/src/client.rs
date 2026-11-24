@@ -988,7 +988,7 @@ where
     #[cfg(not(feature = "introspection"))]
     #[expect(clippy::unused_self)]
     fn msg_query_introspection_reply(
-        &mut self,
+        &self,
         msg: QueryIntrospectionReply,
     ) -> Result<(), RunError<T::Error>> {
         Err(RunError::UnexpectedMessageReceived(msg.into()))

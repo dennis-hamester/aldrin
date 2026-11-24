@@ -3,7 +3,6 @@ use aldrin_test::aldrin::Error;
 use aldrin_test::aldrin::low_level::ServiceInfo;
 use aldrin_test::tokio::TestBroker;
 use futures_core::stream::FusedStream;
-use std::mem;
 use std::time::Duration;
 use tokio::time;
 use uuid::uuid;
@@ -534,7 +533,7 @@ async fn destroy_proxy() {
     assert_eq!(ev.id(), 0);
     assert_eq!(ev.deserialize(), Ok(()));
 
-    mem::drop(proxy1);
+    drop(proxy1);
     client.sync_broker().await.unwrap();
 
     svc.emit(0, ()).unwrap();
@@ -753,7 +752,7 @@ async fn unsubscribe_all_without_serial() {
 
     let proxy = client.create_proxy(svc.id()).await.unwrap();
     proxy.subscribe_all().await.unwrap();
-    mem::drop(proxy);
+    drop(proxy);
 
     client.sync_broker().await.unwrap();
 }

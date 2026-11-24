@@ -2,7 +2,6 @@ use aldrin_core::{ByteSlice, Bytes};
 use aldrin_test::aldrin::Error;
 use aldrin_test::tokio::TestBroker;
 use futures_util::stream::FusedStream;
-use std::mem;
 use std::time::Duration;
 use tokio::time;
 
@@ -183,7 +182,7 @@ async fn multiple_clients() {
     let mut sender = sender.establish().await.unwrap();
 
     sender.send_item("hello").await.unwrap();
-    assert_eq!(receiver.next_item().await, Ok(Some("hello".to_string())));
+    assert_eq!(receiver.next_item().await, Ok(Some("hello".to_owned())));
 
     client1.join().await;
     client2.join().await;
@@ -285,7 +284,7 @@ async fn sender_closed_implicit() {
     let receiver = receiver.claim(16).await.unwrap();
     let mut sender = sender.establish().await.unwrap();
 
-    mem::drop(receiver);
+    drop(receiver);
     sender.receiver_closed().await;
 
     client.join().await;
@@ -300,7 +299,7 @@ async fn not_leaking_pending_senders() {
     let (sender, receiver) = client.create_channel::<()>().claim_sender().await.unwrap();
 
     // Dropping the receiver will close that half and establishing the sender will fail.
-    mem::drop(receiver);
+    drop(receiver);
     assert_eq!(sender.establish().await.unwrap_err(), Error::InvalidChannel);
 
     client.sync_broker().await.unwrap();
@@ -323,7 +322,7 @@ async fn not_leaking_pending_receivers() {
         .unwrap();
 
     // Dropping the sender will close that half and establishing the receiver will fail.
-    mem::drop(sender);
+    drop(sender);
     assert_eq!(
         receiver.establish().await.unwrap_err(),
         Error::InvalidChannel
@@ -347,11 +346,11 @@ async fn not_leaking_senders() {
     let mut sender = sender.establish().await.unwrap();
 
     // Dropping the receiver will close that half and notify the sender.
-    mem::drop(receiver);
+    drop(receiver);
     sender.receiver_closed().await;
 
     // Dropping the sender will close the other half and then the entire channel.
-    mem::drop(sender);
+    drop(sender);
 
     client.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();
@@ -371,11 +370,11 @@ async fn not_leaking_receivers() {
     let sender = sender.establish().await.unwrap();
 
     // Dropping the sender will close that half and notify the receiver.
-    mem::drop(sender);
+    drop(sender);
     assert_eq!(receiver.next_item().await, Ok(None));
 
     // Dropping the receiver will close the other half and then the entire channel.
-    mem::drop(receiver);
+    drop(receiver);
 
     client.sync_broker().await.unwrap();
     let stats = broker.take_statistics().await.unwrap();

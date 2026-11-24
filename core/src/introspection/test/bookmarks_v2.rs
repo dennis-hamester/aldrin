@@ -77,7 +77,7 @@ impl Introspectable for Bookmarks {
         LexicalId::service("bookmarks_v2", "Bookmarks")
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         let types = [
             DynIntrospectable::new::<Error>(),
             DynIntrospectable::new::<Bookmark>(),
@@ -107,7 +107,7 @@ impl Introspectable for BookmarksGetV2Args {
         LexicalId::custom("bookmarks_v2", "BookmarksGetV2Args")
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         let types = [DynIntrospectable::new::<String>()];
 
         references.extend(types);
@@ -130,7 +130,7 @@ impl Introspectable for BookmarksRemoveV2Args {
         LexicalId::custom("bookmarks_v2", "BookmarksRemoveV2Args")
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         let types = [
             DynIntrospectable::new::<String>(),
             DynIntrospectable::new::<String>(),
@@ -157,7 +157,7 @@ impl Introspectable for Bookmark {
         LexicalId::custom("bookmarks_v2", "Bookmark")
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         let types = [
             DynIntrospectable::new::<String>(),
             DynIntrospectable::new::<String>(),
@@ -187,5 +187,5 @@ impl Introspectable for Error {
         LexicalId::custom("bookmarks_v2", "Error")
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

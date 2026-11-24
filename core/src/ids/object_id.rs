@@ -48,19 +48,19 @@ impl PrimaryTag for ObjectId {
 }
 
 impl Serialize<tags::ObjectId> for ObjectId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_object_id(self)
     }
 }
 
 impl Serialize<tags::ObjectId> for &ObjectId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<tags::ObjectId> for ObjectId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_object_id()
     }
 }
@@ -75,5 +75,5 @@ impl Introspectable for ObjectId {
         LexicalId::OBJECT_ID
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

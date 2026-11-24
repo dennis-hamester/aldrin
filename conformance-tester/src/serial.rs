@@ -78,7 +78,7 @@ impl<'de> Deserialize<'de> for Serial {
         impl Visitor<'_> for SerialVisitor {
             type Value = Serial;
 
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(
                     formatter,
                     "a non-negative integer or a string of the form `get:{{id}}` or `set:{{id}}`"

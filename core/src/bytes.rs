@@ -83,19 +83,19 @@ impl PrimaryTag for Bytes {
 }
 
 impl Serialize<tags::Bytes> for Bytes {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_byte_slice2(&self)
     }
 }
 
 impl Serialize<tags::Bytes> for &Bytes {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_byte_slice2(self)
     }
 }
 
 impl Deserialize<tags::Bytes> for Bytes {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_bytes_extend_new().map(Self)
     }
 }
@@ -105,7 +105,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
@@ -115,7 +115,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
@@ -125,7 +125,7 @@ where
     T: Tag,
     u8: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer
             .deserialize_vec_extend_new::<T, u8, _>()
             .map(Self)
@@ -142,7 +142,7 @@ impl Introspectable for Bytes {
         LexicalId::BYTES
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 /// Wrapper for `[u8]` to enable `Serialize` and `Deserialize` specializations.
@@ -216,7 +216,7 @@ impl PrimaryTag for &ByteSlice {
 }
 
 impl Serialize<tags::Bytes> for &ByteSlice {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_byte_slice2(self)
     }
 }
@@ -226,7 +226,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.0.iter().copied())
     }
 }
@@ -241,5 +241,5 @@ impl Introspectable for ByteSlice {
         LexicalId::BYTES
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

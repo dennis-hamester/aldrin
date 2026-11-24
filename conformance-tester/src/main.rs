@@ -41,7 +41,7 @@ struct Args {
 }
 
 #[derive(Parser)]
-pub struct FilterArgs {
+struct FilterArgs {
     /// Select only tests with one of the specified names.
     #[clap(short, long)]
     name: Vec<String>,
@@ -69,13 +69,13 @@ impl FilterArgs {
 }
 
 #[derive(Parser)]
-pub struct DescribeArgs {
+struct DescribeArgs {
     /// Name of the test to describe.
     test: String,
 }
 
 #[derive(Clone, Parser)]
-pub struct BrokerRunArgs {
+struct BrokerRunArgs {
     /// Timeout in milliseconds until the broker is ready to accept connections.
     ///
     /// The broker must print the port to stdout and then accept connections within this time.
@@ -97,7 +97,7 @@ pub struct BrokerRunArgs {
 }
 
 #[derive(Parser)]
-pub struct RunArgs {
+struct RunArgs {
     #[clap(flatten)]
     filter: FilterArgs,
 

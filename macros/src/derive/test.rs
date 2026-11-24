@@ -132,10 +132,12 @@ struct Unit;
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 #[aldrin(schema = "test", ref_type)]
+#[expect(clippy::empty_structs_with_brackets)]
 struct EmptyStruct {}
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]
 #[aldrin(schema = "test", ref_type)]
+#[expect(clippy::empty_structs_with_brackets)]
 struct EmptyTupleStruct();
 
 #[derive(Tag, PrimaryTag, RefType, Serialize, Deserialize, Introspectable)]

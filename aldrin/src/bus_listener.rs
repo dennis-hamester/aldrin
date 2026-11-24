@@ -390,7 +390,7 @@ impl BusListener {
     }
 
     /// Polls the bus listener for an event.
-    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<BusEvent>> {
+    pub fn poll_next_event(&mut self, cx: &mut Context<'_>) -> Poll<Option<BusEvent>> {
         loop {
             if self.is_finished() {
                 break Poll::Ready(None);
@@ -440,7 +440,7 @@ impl Drop for BusListener {
 impl Stream for BusListener {
     type Item = BusEvent;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<BusEvent>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<BusEvent>> {
         self.poll_next_event(cx)
     }
 }

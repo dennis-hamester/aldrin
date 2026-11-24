@@ -17,7 +17,7 @@ where
     K: KeyTag,
     T: SerializeKey<K>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2_iter(self)
     }
 }
@@ -27,7 +27,7 @@ where
     K: KeyTag,
     &'a T: SerializeKey<K>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2_iter(self)
     }
 }
@@ -38,7 +38,7 @@ where
     T: DeserializeKey<K> + Eq + Hash,
     S: Default + BuildHasher,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
     }
 }
@@ -53,7 +53,7 @@ impl<T: Introspectable, S> Introspectable for HashSet<T, S> {
         LexicalId::set(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -67,7 +67,7 @@ where
     K: KeyTag,
     T: SerializeKey<K>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2_iter(self)
     }
 }
@@ -77,7 +77,7 @@ where
     K: KeyTag,
     &'a T: SerializeKey<K>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2_iter(self)
     }
 }
@@ -87,7 +87,7 @@ where
     K: KeyTag,
     T: DeserializeKey<K> + Ord,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set_extend_new()
     }
 }
@@ -102,25 +102,25 @@ impl<T: Introspectable> Introspectable for BTreeSet<T> {
         LexicalId::set(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
 
 impl<T: KeyTag> Serialize<Set<T>> for () {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2::<T>()?.finish()
     }
 }
 
 impl<T: KeyTag> Serialize<Set<T>> for &() {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_set2::<T>()?.finish()
     }
 }
 
 impl<T: KeyTag> Deserialize<Set<T>> for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_set::<T>()?.finish(())
     }
 }

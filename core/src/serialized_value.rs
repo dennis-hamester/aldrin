@@ -93,7 +93,7 @@ impl Deref for SerializedValue {
 // The default Debug implementation renders the bytes as ASCII or escape sequences, which isn't
 // particularly useful here.
 impl fmt::Debug for SerializedValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SerializedValue")
             .field("buf", &&*self.buf)
             .finish()
@@ -177,19 +177,19 @@ impl PrimaryTag for SerializedValue {
 }
 
 impl Serialize<tags::Value> for SerializedValue {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<tags::Value> for &SerializedValue {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&**self)
     }
 }
 
 impl Deserialize<tags::Value> for SerializedValue {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer
             .split_off_serialized_value()
             .map(SerializedValueSlice::to_owned)
@@ -206,7 +206,7 @@ impl Introspectable for SerializedValue {
         LexicalId::VALUE
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 #[cfg(feature = "fuzzing")]
@@ -338,7 +338,7 @@ impl PrimaryTag for &SerializedValueSlice {
 }
 
 impl Serialize<tags::Value> for &SerializedValueSlice {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.copy_from_serialized_value(self)
     }
 }
@@ -353,5 +353,5 @@ impl Introspectable for SerializedValueSlice {
         LexicalId::VALUE
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

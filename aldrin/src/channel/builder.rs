@@ -75,7 +75,7 @@ impl<'a, T> ChannelBuilder<'a, T> {
 }
 
 impl<T> fmt::Debug for ChannelBuilder<'_, T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ChannelBuilder")
             .field("inner", &self.inner)
             .finish()

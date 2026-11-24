@@ -15,7 +15,7 @@ pub(crate) struct RecursiveStruct {
 }
 
 impl RecursiveStruct {
-    pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate) {
+    pub(crate) fn validate(struct_def: &StructDef, validate: &mut Validate<'_>) {
         if Visitor::check_struct(struct_def, validate) {
             validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),
@@ -64,7 +64,7 @@ pub(crate) struct RecursiveEnum {
 }
 
 impl RecursiveEnum {
-    pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate) {
+    pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate<'_>) {
         if Visitor::check_enum(enum_def, validate) {
             validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),
@@ -113,7 +113,7 @@ pub(crate) struct RecursiveNewtype {
 }
 
 impl RecursiveNewtype {
-    pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate) {
+    pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate<'_>) {
         if Visitor::check_newtype(newtype_def, validate) {
             validate.add_error(Self {
                 schema_name: validate.schema_name().to_owned(),
@@ -161,21 +161,21 @@ struct Visitor<'a> {
 }
 
 impl<'a> Visitor<'a> {
-    fn check_struct(struct_def: &'a StructDef, validate: &'a Validate) -> bool {
+    fn check_struct(struct_def: &'a StructDef, validate: &'a Validate<'_>) -> bool {
         match Self::new(validate).visit_struct(struct_def, validate.get_current_schema()) {
             ControlFlow::Continue(()) => false,
             ControlFlow::Break(raise_error) => raise_error,
         }
     }
 
-    fn check_enum(enum_def: &'a EnumDef, validate: &'a Validate) -> bool {
+    fn check_enum(enum_def: &'a EnumDef, validate: &'a Validate<'_>) -> bool {
         match Self::new(validate).visit_enum(enum_def, validate.get_current_schema()) {
             ControlFlow::Continue(()) => false,
             ControlFlow::Break(raise_error) => raise_error,
         }
     }
 
-    fn check_newtype(newtype_def: &'a NewtypeDef, validate: &'a Validate) -> bool {
+    fn check_newtype(newtype_def: &'a NewtypeDef, validate: &'a Validate<'_>) -> bool {
         match Self::new(validate).visit_newtype(newtype_def, validate.get_current_schema()) {
             ControlFlow::Continue(()) => false,
             ControlFlow::Break(raise_error) => raise_error,
@@ -329,8 +329,7 @@ impl<'a> Visitor<'a> {
                 self.visit_newtype(newtype_def, schema)
             }
 
-            (Some(Definition::Service(_)), _)
-            | (Some(Definition::Const(_)), _)
+            (Some(Definition::Service(_) | Definition::Const(_)), _)
             | (Some(_), Some(_))
             | (None, None) => ControlFlow::Break(false),
 

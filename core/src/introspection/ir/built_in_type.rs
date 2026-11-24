@@ -113,7 +113,7 @@ impl PrimaryTag for BuiltInTypeIr {
 }
 
 impl Serialize<BuiltInTypeIr> for &BuiltInTypeIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             BuiltInTypeIr::Bool => serializer.serialize_unit_enum(BuiltInTypeVariant::Bool),
             BuiltInTypeIr::U8 => serializer.serialize_unit_enum(BuiltInTypeVariant::U8),

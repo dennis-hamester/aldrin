@@ -177,7 +177,7 @@ impl Promise {
     }
 
     /// Polls whether the call was aborted by the caller.
-    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_aborted(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         if self.aborted.is_terminated() {
             Poll::Ready(())
         } else {

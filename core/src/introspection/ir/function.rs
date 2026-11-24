@@ -60,7 +60,7 @@ impl PrimaryTag for FunctionIr {
 }
 
 impl Serialize<FunctionIr> for &FunctionIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(FunctionField::Id, &self.id)?;

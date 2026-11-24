@@ -12,7 +12,7 @@ pub(crate) struct InvalidEnumVariantId {
 }
 
 impl InvalidEnumVariantId {
-    pub(crate) fn validate(var: &EnumVariant, validate: &mut Validate) {
+    pub(crate) fn validate(var: &EnumVariant, validate: &mut Validate<'_>) {
         if var.id().value().parse::<u32>().is_ok() {
             return;
         }

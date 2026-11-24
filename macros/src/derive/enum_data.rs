@@ -119,9 +119,9 @@ impl<'a> VariantData<'a> {
                         variant,
                         "the fallback variant must have exactly 1 element",
                     ));
-                } else {
-                    (None, None)
                 }
+
+                (None, None)
             }
 
             Fields::Unnamed(ref fields) if fields.unnamed.len() == 1 => {
@@ -143,9 +143,9 @@ impl<'a> VariantData<'a> {
                         variant,
                         "the fallback variant must have exactly 1 element",
                     ));
-                } else {
-                    (None, None)
                 }
+
+                (None, None)
             }
 
             Fields::Named(_) => {

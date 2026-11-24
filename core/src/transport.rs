@@ -13,7 +13,7 @@ pub use buffered::Buffered;
 pub type BoxedTransport<'a, E> = Pin<Box<dyn AsyncTransport<Error = E> + std::marker::Send + 'a>>;
 
 impl<E> fmt::Debug for BoxedTransport<'_, E> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("BoxedTransport").finish()
     }
 }
@@ -57,7 +57,10 @@ pub trait AsyncTransport {
     type Error;
 
     /// Attempts to receive the next message.
-    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>>;
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<Message, Self::Error>>;
 
     /// Prepares the transport for sending a message.
     ///
@@ -66,7 +69,8 @@ pub trait AsyncTransport {
     /// the transport ready to start sending a single [`Message`].
     ///
     /// The transport may be implicitly flushed, fully or partially, when this method is called.
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context<'_>)
+    -> Poll<Result<(), Self::Error>>;
 
     /// Begins sending a message.
     ///
@@ -82,7 +86,8 @@ pub trait AsyncTransport {
     /// Attempts to flush the transport.
     ///
     /// Flushing must deliver _all_ prior [`Message`s](Message) to the remote end of the transport.
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>>;
+    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>)
+    -> Poll<Result<(), Self::Error>>;
 }
 
 impl<T> AsyncTransport for Pin<T>
@@ -92,11 +97,17 @@ where
 {
     type Error = <T::Target as AsyncTransport>::Error;
 
-    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<Message, Self::Error>> {
         self.get_mut().as_mut().receive_poll(cx)
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_ready(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         self.get_mut().as_mut().send_poll_ready(cx)
     }
 
@@ -104,7 +115,10 @@ where
         self.get_mut().as_mut().send_start(msg)
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         self.get_mut().as_mut().send_poll_flush(cx)
     }
 }
@@ -117,14 +131,14 @@ where
 
     fn receive_poll(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Message, Self::Error>> {
         Pin::new(&mut **self).receive_poll(cx)
     }
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut **self).send_poll_ready(cx)
     }
@@ -135,7 +149,7 @@ where
 
     fn send_poll_flush(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
         Pin::new(&mut **self).send_poll_flush(cx)
     }
@@ -149,14 +163,14 @@ where
 
     fn receive_poll(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<Message, Self::Error>> {
         T::receive_poll(Pin::new(&mut **self), cx)
     }
 
     fn send_poll_ready(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
         T::send_poll_ready(Pin::new(&mut **self), cx)
     }
@@ -167,7 +181,7 @@ where
 
     fn send_poll_flush(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Result<(), Self::Error>> {
         T::send_poll_flush(Pin::new(&mut **self), cx)
     }
@@ -205,14 +219,14 @@ pub trait AsyncTransportExt: AsyncTransport {
         SendFlush(SendFlushInner::Send(self.send(msg)))
     }
 
-    fn receive_poll_unpin(&mut self, cx: &mut Context) -> Poll<Result<Message, Self::Error>>
+    fn receive_poll_unpin(&mut self, cx: &mut Context<'_>) -> Poll<Result<Message, Self::Error>>
     where
         Self: Unpin,
     {
         Pin::new(self).receive_poll(cx)
     }
 
-    fn send_poll_ready_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
+    fn send_poll_ready_unpin(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>>
     where
         Self: Unpin,
     {
@@ -226,7 +240,7 @@ pub trait AsyncTransportExt: AsyncTransport {
         Pin::new(self).send_start(msg.into())
     }
 
-    fn send_poll_flush_unpin(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>>
+    fn send_poll_flush_unpin(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>>
     where
         Self: Unpin,
     {
@@ -273,7 +287,7 @@ where
 {
     type Output = Result<Message, T::Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         self.0.receive_poll_unpin(cx)
     }
 }
@@ -294,7 +308,7 @@ where
 {
     type Output = Result<(), T::Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.t.send_poll_ready_unpin(cx) {
             Poll::Ready(Ok(())) => {
                 let msg = self.msg.take().unwrap();
@@ -326,7 +340,7 @@ where
 {
     type Output = Result<(), T::Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         self.0.send_poll_flush_unpin(cx)
     }
 }
@@ -353,11 +367,11 @@ where
 {
     type Output = Result<(), T::Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         if let SendFlushInner::Send(ref mut send) = self.0 {
             match Pin::new(send).poll(cx) {
                 Poll::Ready(Ok(())) => {}
-                p @ Poll::Ready(Err(_)) | p @ Poll::Pending => return p,
+                p @ (Poll::Ready(Err(_)) | Poll::Pending) => return p,
             }
 
             let mut tmp = SendFlushInner::None;
@@ -394,12 +408,18 @@ where
 {
     type Error = E;
 
-    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<Message, Self::Error>> {
         let this = self.project();
         this.transport.receive_poll(cx).map_err(this.map_err)
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_ready(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         let this = self.project();
         this.transport.send_poll_ready(cx).map_err(this.map_err)
     }
@@ -409,7 +429,10 @@ where
         this.transport.send_start(msg).map_err(this.map_err)
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         let this = self.project();
         this.transport.send_poll_flush(cx).map_err(this.map_err)
     }

@@ -13,7 +13,7 @@ pub(crate) struct DuplicateServiceItem {
 }
 
 impl DuplicateServiceItem {
-    pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
+    pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate<'_>) {
         let mut fallback_dup = false;
 
         util::find_duplicates(

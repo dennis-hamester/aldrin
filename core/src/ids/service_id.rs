@@ -56,19 +56,19 @@ impl PrimaryTag for ServiceId {
 }
 
 impl Serialize<tags::ServiceId> for ServiceId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_service_id(self)
     }
 }
 
 impl Serialize<tags::ServiceId> for &ServiceId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<tags::ServiceId> for ServiceId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_service_id()
     }
 }
@@ -83,5 +83,5 @@ impl Introspectable for ServiceId {
         LexicalId::SERVICE_ID
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

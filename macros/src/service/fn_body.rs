@@ -17,7 +17,7 @@ impl FnBody {
         }
     }
 
-    pub(crate) fn parse_simplified(input: ParseStream) -> Result<Self> {
+    pub(crate) fn parse_simplified(input: ParseStream<'_>) -> Result<Self> {
         input.parse::<Token![=]>()?;
         let ok = input.parse()?;
 
@@ -42,7 +42,7 @@ impl FnBody {
 }
 
 impl Parse for FnBody {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let args = if input.parse::<kw::args>().is_ok() {
             input.parse::<Token![=]>()?;
             let args = input.parse()?;

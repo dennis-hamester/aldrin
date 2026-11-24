@@ -238,7 +238,7 @@ fn select_protocol_version(version: ProtocolVersion, connect2: bool) -> Option<P
     const MIN: ProtocolVersion = ProtocolVersion::V1_14;
     const MAX: ProtocolVersion = ProtocolVersion::V1_20;
 
-    debug_assert!(MIN.major() == MAX.major());
+    debug_assert_eq!(MIN.major(), MAX.major());
 
     if version.major() != MIN.major() {
         None

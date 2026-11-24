@@ -1067,7 +1067,7 @@ pub(crate) struct CloseChannelEndFuture(oneshot::Receiver<Result<(), Error>>);
 impl Future for CloseChannelEndFuture {
     type Output = Result<(), Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match Pin::new(&mut self.0).poll(cx) {
             Poll::Ready(Ok(Ok(()))) => Poll::Ready(Ok(())),
             Poll::Ready(Ok(Err(e))) => Poll::Ready(Err(e)),

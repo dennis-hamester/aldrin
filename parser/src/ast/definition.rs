@@ -14,7 +14,7 @@ pub enum Definition {
 }
 
 impl Definition {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::def);
 
         let mut pairs = pair.into_inner();
@@ -31,7 +31,7 @@ impl Definition {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         match self {
             Self::Struct(d) => d.validate(validate),
             Self::Enum(d) => d.validate(validate),

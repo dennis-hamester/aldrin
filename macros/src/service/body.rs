@@ -722,7 +722,7 @@ impl Body {
 }
 
 impl Parse for Body {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         input.parse::<kw::uuid>()?;
         input.parse::<Token![=]>()?;
         let uuid = input.parse()?;
@@ -757,9 +757,9 @@ impl Parse for Body {
                             ev.ident(),
                             "there can be at most one evnt fallback",
                         ));
-                    } else {
-                        ev_fallback = true;
                     }
+
+                    ev_fallback = true;
                 }
 
                 ServiceItem::Function(func) => {
@@ -777,9 +777,9 @@ impl Parse for Body {
                             func.ident(),
                             "there can be at most one function fallback",
                         ));
-                    } else {
-                        fn_fallback = true;
                     }
+
+                    fn_fallback = true;
                 }
             }
         }

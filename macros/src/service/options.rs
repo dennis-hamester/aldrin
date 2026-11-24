@@ -52,7 +52,7 @@ impl Options {
 }
 
 impl Parse for Options {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let attrs = input.call(Attribute::parse_outer)?;
 
         let mut doc = DocString::new();
@@ -143,7 +143,7 @@ impl ItemOptions {
 }
 
 impl Parse for ItemOptions {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let attrs = input.call(Attribute::parse_outer)?;
 
         let mut doc = DocString::new();

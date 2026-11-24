@@ -20,7 +20,7 @@ pub struct StructDef {
 }
 
 impl StructDef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::struct_def);
 
         let span = Span::from_pair(&pair);
@@ -58,7 +58,7 @@ impl StructDef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         DuplicateStructField::validate(
             &self.fields,
             self.fallback.as_ref(),
@@ -122,7 +122,7 @@ pub struct InlineStruct {
 }
 
 impl InlineStruct {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::struct_inline);
 
         let span = Span::from_pair(&pair);
@@ -157,7 +157,7 @@ impl InlineStruct {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         DuplicateStructField::validate(&self.fields, self.fallback.as_ref(), None, validate);
         DuplicateStructFieldId::validate(&self.fields, None, validate);
@@ -208,7 +208,7 @@ pub struct StructField {
 }
 
 impl StructField {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::struct_field);
 
         let span = Span::from_pair(&pair);
@@ -242,7 +242,7 @@ impl StructField {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         InvalidStructFieldId::validate(self, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
@@ -289,7 +289,7 @@ pub struct StructFallback {
 }
 
 impl StructFallback {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::struct_fallback);
 
         let span = Span::from_pair(&pair);
@@ -304,7 +304,7 @@ impl StructFallback {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         NonSnakeCaseStructField::validate(&self.name, validate);
 

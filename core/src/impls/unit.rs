@@ -8,19 +8,19 @@ impl PrimaryTag for () {
 }
 
 impl Serialize<tags::Unit> for () {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
 }
 
 impl Serialize<tags::Unit> for &() {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
 }
 
 impl Deserialize<tags::Unit> for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_none()
     }
 }
@@ -35,5 +35,5 @@ impl Introspectable for () {
         LexicalId::UNIT
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

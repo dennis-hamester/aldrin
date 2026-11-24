@@ -86,7 +86,7 @@ impl UnknownEvent {
 }
 
 impl fmt::Display for UnknownEvent {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unknown event {} received", self.id())
     }
 }

@@ -12,55 +12,55 @@ impl PrimaryTag for Uuid {
 }
 
 impl Serialize<tags::Uuid> for Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Uuid>(*self)
     }
 }
 
 impl Deserialize<tags::Uuid> for Uuid {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid()
     }
 }
 
 impl<T: Tag> Serialize<Sender<T>> for Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_sender(ChannelCookie(self))
     }
 }
 
 impl<T: Tag> Serialize<Sender<T>> for &Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Sender<T>>(*self)
     }
 }
 
 impl<T: Tag> Deserialize<Sender<T>> for Uuid {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_sender().map(|cookie| cookie.0)
     }
 }
 
 impl<T: Tag> Serialize<Receiver<T>> for Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_receiver(ChannelCookie(self))
     }
 }
 
 impl<T: Tag> Serialize<Receiver<T>> for &Uuid {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Receiver<T>>(*self)
     }
 }
 
 impl<T: Tag> Deserialize<Receiver<T>> for Uuid {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_receiver().map(|cookie| cookie.0)
     }
 }
@@ -75,5 +75,5 @@ impl Introspectable for Uuid {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

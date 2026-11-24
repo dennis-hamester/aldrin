@@ -44,7 +44,7 @@ impl UnclaimedSender {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -162,7 +162,7 @@ impl UnclaimedReceiver {
     /// Initiates closing the receiver and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 

@@ -120,7 +120,7 @@ impl TryFrom<message::QueryServiceInfoResult> for QueryServiceInfoResult {
             message::QueryServiceInfoResult::Ok(value) => {
                 let info = value
                     .deserialize::<CoreServiceInfo>()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?
+                    .with_context(|| anyhow!("failed to deserialize value `{value:?}`"))?
                     .into();
 
                 Ok(Self::Ok { info })

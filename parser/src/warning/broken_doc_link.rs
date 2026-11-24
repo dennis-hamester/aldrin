@@ -16,7 +16,7 @@ pub(crate) struct BrokenDocLink {
 }
 
 impl BrokenDocLink {
-    pub(crate) fn validate(doc: &[DocString], validate: &mut Validate) {
+    pub(crate) fn validate(doc: &[DocString], validate: &mut Validate<'_>) {
         if doc.is_empty() {
             return;
         }
@@ -35,7 +35,7 @@ impl BrokenDocLink {
         options.extension.tasklist = true;
         options.parse.smart = true;
 
-        options.parse.broken_link_callback = Some(Arc::new(|link: BrokenLinkReference| {
+        options.parse.broken_link_callback = Some(Arc::new(|link: BrokenLinkReference<'_>| {
             LinkResolver::convert_broken_link(link.original).map(|link| ResolvedReference {
                 url: link.to_owned(),
                 title: String::new(),
@@ -60,10 +60,10 @@ impl BrokenDocLink {
     }
 
     fn from_error(
-        e: ResolveLinkError,
+        e: ResolveLinkError<'_>,
         doc: &[DocString],
         pos: Sourcepos,
-        validate: &Validate,
+        validate: &Validate<'_>,
     ) -> Self {
         Self {
             schema_name: validate.schema_name().to_owned(),
@@ -100,6 +100,7 @@ impl BrokenDocLink {
 
                     let idx = offset + line_col.column - 1 + usize::from(end);
 
+                    #[expect(clippy::redundant_else)]
                     if value.is_char_boundary(idx) {
                         return Some(doc.span_inner().start + idx);
                     } else {

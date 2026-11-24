@@ -50,13 +50,13 @@ impl PrimaryTag for EventFallback {
 }
 
 impl Serialize<Self> for EventFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<EventFallback> for &EventFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(EventFallbackField::Name, &self.name)?;
@@ -69,7 +69,7 @@ impl Serialize<EventFallback> for &EventFallback {
 }
 
 impl Deserialize<Self> for EventFallback {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut name = None;

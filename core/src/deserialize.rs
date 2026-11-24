@@ -3,7 +3,7 @@ use crate::tags::{PrimaryTag, Tag};
 use thiserror::Error;
 
 pub trait Deserialize<T: Tag>: Sized {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError>;
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError>;
 }
 
 pub trait DeserializePrimary: PrimaryTag + Deserialize<Self::Tag> {}

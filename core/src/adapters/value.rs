@@ -26,7 +26,7 @@ impl<T, U> PrimaryTag for AsValue<T, U> {
 }
 
 impl<T: Tag, U: Serialize<T>> Serialize<tags::Value> for AsValue<T, U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(self.inner)
     }
 }
@@ -36,13 +36,13 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self.inner)
     }
 }
 
 impl<T, U: fmt::Debug> fmt::Debug for AsValue<T, U> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AsValue")
             .field("inner", &self.inner)
             .finish()

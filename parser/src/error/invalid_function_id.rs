@@ -12,7 +12,7 @@ pub(crate) struct InvalidFunctionId {
 }
 
 impl InvalidFunctionId {
-    pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate) {
+    pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate<'_>) {
         if func.id().value().parse::<u32>().is_ok() {
             return;
         }

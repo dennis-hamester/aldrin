@@ -14,7 +14,7 @@ pub struct ImportStmt {
 }
 
 impl ImportStmt {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::import_stmt);
 
         let span = Span::from_pair(&pair);
@@ -33,7 +33,7 @@ impl ImportStmt {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         ImportNotFound::validate(self, validate);
         UnusedImport::validate(self, validate);
     }

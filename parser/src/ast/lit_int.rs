@@ -9,7 +9,7 @@ pub struct LitInt {
 }
 
 impl LitInt {
-    pub(crate) fn parse(pair: &Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: &Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::lit_int);
 
         Self {

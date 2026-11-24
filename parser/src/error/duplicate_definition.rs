@@ -12,7 +12,7 @@ pub(crate) struct DuplicateDefinition {
 }
 
 impl DuplicateDefinition {
-    pub(crate) fn validate(schema: &Schema, validate: &mut Validate) {
+    pub(crate) fn validate(schema: &Schema, validate: &mut Validate<'_>) {
         util::find_duplicates(
             schema.definitions(),
             |def| def.name().value(),

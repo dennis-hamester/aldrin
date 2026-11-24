@@ -8,7 +8,7 @@ pub struct Span {
 }
 
 impl Span {
-    pub(crate) fn from_pair(pair: &Pair<Rule>) -> Self {
+    pub(crate) fn from_pair(pair: &Pair<'_, Rule>) -> Self {
         let span = pair.as_span();
 
         Self {

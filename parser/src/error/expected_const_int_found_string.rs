@@ -12,7 +12,7 @@ pub(crate) struct ExpectedConstIntFoundString {
 }
 
 impl ExpectedConstIntFoundString {
-    pub(crate) fn validate(named_ref: &NamedRef, validate: &mut Validate) {
+    pub(crate) fn validate(named_ref: &NamedRef, validate: &mut Validate<'_>) {
         let (schema, ident) = match named_ref.kind() {
             NamedRefKind::Intern(ident) => (validate.get_current_schema(), ident),
 

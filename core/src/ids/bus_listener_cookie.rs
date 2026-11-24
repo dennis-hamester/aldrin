@@ -52,37 +52,37 @@ impl PrimaryTag for BusListenerCookie {
 }
 
 impl Serialize<Self> for BusListenerCookie {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Serialize<BusListenerCookie> for &BusListenerCookie {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<BusListenerCookie>(*self)
     }
 }
 
 impl Deserialize<Self> for BusListenerCookie {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
 
 impl Serialize<tags::Uuid> for BusListenerCookie {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &BusListenerCookie {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Uuid>(*self)
     }
 }
 
 impl Deserialize<tags::Uuid> for BusListenerCookie {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize::<Self, _>()
     }
 }
@@ -129,7 +129,7 @@ impl Introspectable for BusListenerCookie {
         LexicalId::UUID
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 impl From<Uuid> for BusListenerCookie {
@@ -145,7 +145,7 @@ impl From<BusListenerCookie> for Uuid {
 }
 
 impl fmt::Display for BusListenerCookie {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }

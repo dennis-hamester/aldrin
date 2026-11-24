@@ -16,7 +16,7 @@ pub struct ArrayLen {
 }
 
 impl ArrayLen {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::array_len);
 
         let span = Span::from_pair(&pair);
@@ -28,7 +28,7 @@ impl ArrayLen {
         Self { span, value }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         InvalidArrayLen::validate(self, validate);
 
         self.value.validate(validate);
@@ -50,7 +50,7 @@ pub enum ArrayLenValue {
 }
 
 impl ArrayLenValue {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::lit_int => Self::Literal(LitInt::parse(&pair)),
@@ -59,7 +59,7 @@ impl ArrayLenValue {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         match self {
             Self::Literal(_) => {}
 
@@ -77,7 +77,7 @@ impl ArrayLenValue {
 }
 
 impl fmt::Display for ArrayLenValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Literal(lit) => lit.value().fmt(f),
             Self::Ref(named_ref) => named_ref.kind().fmt(f),

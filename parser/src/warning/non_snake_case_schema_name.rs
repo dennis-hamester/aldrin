@@ -11,7 +11,7 @@ pub(crate) struct NonSnakeCaseSchemaName {
 }
 
 impl NonSnakeCaseSchemaName {
-    pub(crate) fn validate(schema_name: &str, validate: &mut Validate) {
+    pub(crate) fn validate(schema_name: &str, validate: &mut Validate<'_>) {
         if !Ident::is_valid(schema_name) {
             return;
         }

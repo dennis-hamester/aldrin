@@ -59,7 +59,7 @@ impl PrimaryTag for FieldIr {
 }
 
 impl Serialize<FieldIr> for &FieldIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(FieldField::Id, &self.id)?;

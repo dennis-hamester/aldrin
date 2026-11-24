@@ -12,7 +12,7 @@ pub(crate) struct InvalidStructFieldId {
 }
 
 impl InvalidStructFieldId {
-    pub(crate) fn validate(field: &StructField, validate: &mut Validate) {
+    pub(crate) fn validate(field: &StructField, validate: &mut Validate<'_>) {
         if field.id().value().parse::<u32>().is_ok() {
             return;
         }

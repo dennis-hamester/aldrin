@@ -10,7 +10,7 @@ impl<T: PrimaryTag> PrimaryTag for AsOk<T> {
 }
 
 impl<T: Tag, E: Tag, U: Serialize<T>> Serialize<Result<T, E>> for AsOk<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Result<_, E>>(Ok::<_, Infallible>(self.0))
     }
 }
@@ -21,7 +21,7 @@ where
     E: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Result<_, E>>(Ok::<_, Infallible>(&self.0))
     }
 }
@@ -34,7 +34,7 @@ impl<T: PrimaryTag> PrimaryTag for AsErr<T> {
 }
 
 impl<T: Tag, E: Tag, F: Serialize<E>> Serialize<Result<T, E>> for AsErr<F> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Result<T, _>>(Err::<Infallible, _>(self.0))
     }
 }
@@ -45,7 +45,7 @@ where
     E: Tag,
     &'a F: Serialize<E>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Result<T, _>>(Err::<Infallible, _>(&self.0))
     }
 }

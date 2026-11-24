@@ -40,7 +40,7 @@ impl Context {
             .ok_or_else(|| anyhow!("unknown client `{id}`"))
     }
 
-    pub(crate) fn get_client(&mut self, id: &ClientId) -> Result<&Client> {
+    pub(crate) fn get_client(&self, id: &ClientId) -> Result<&Client> {
         self.clients
             .get(id)
             .ok_or_else(|| anyhow!("unknown client `{id}`"))

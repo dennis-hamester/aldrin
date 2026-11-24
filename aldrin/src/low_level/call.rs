@@ -208,7 +208,7 @@ impl Call {
     }
 
     /// Polls whether the call was aborted by the caller.
-    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_aborted(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.promise.poll_aborted(cx)
     }
 

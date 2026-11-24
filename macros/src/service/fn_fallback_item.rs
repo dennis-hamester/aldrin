@@ -108,7 +108,7 @@ impl FnFallbackItem {
 }
 
 impl Parse for FnFallbackItem {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let options = input.parse()?;
         input.parse::<Token![fn]>()?;
         let ident = input.parse::<Ident>()?;

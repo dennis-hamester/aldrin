@@ -19,7 +19,7 @@ pub struct Schema {
 }
 
 impl Schema {
-    pub(crate) fn parse(file: &SchemaFile, issues: &mut Issues) -> Self {
+    pub(crate) fn parse(file: &SchemaFile<'_>, issues: &mut Issues) -> Self {
         let mut schema = Self {
             name: file.name().to_owned(),
             path: file.path().to_owned(),
@@ -68,7 +68,7 @@ impl Schema {
         schema
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         if !Ident::is_valid(&self.name) {
             validate.add_error(InvalidSchemaName::new(self.name.clone()));
         }

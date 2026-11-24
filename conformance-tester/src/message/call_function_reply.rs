@@ -126,7 +126,7 @@ impl TryFrom<message::CallFunctionResult> for CallFunctionResult {
             message::CallFunctionResult::Ok(value) => {
                 let value = value
                     .deserialize()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?;
+                    .with_context(|| anyhow!("failed to deserialize value `{value:?}`"))?;
 
                 Ok(Self::Ok { value })
             }
@@ -134,7 +134,7 @@ impl TryFrom<message::CallFunctionResult> for CallFunctionResult {
             message::CallFunctionResult::Err(value) => {
                 let value = value
                     .deserialize()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?;
+                    .with_context(|| anyhow!("failed to deserialize value `{value:?}`"))?;
 
                 Ok(Self::Err { value })
             }

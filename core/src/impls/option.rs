@@ -8,7 +8,7 @@ impl<T: PrimaryTag> PrimaryTag for Option<T> {
 }
 
 impl<T: Tag, U: Serialize<T>> Serialize<tags::Option<T>> for Option<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Self::Some(value) => serializer.serialize_some(value),
             Self::None => serializer.serialize_none(),
@@ -25,10 +25,10 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
-            Option::Some(value) => serializer.serialize_some(value),
-            Option::None => serializer.serialize_none(),
+            Some(value) => serializer.serialize_some(value),
+            None => serializer.serialize_none(),
         }
     }
 
@@ -38,13 +38,13 @@ where
 }
 
 impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Option<T>> for Option<U> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_option()
     }
 }
 
 impl<T: Tag> Serialize<tags::Option<T>> for () {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
 
@@ -54,7 +54,7 @@ impl<T: Tag> Serialize<tags::Option<T>> for () {
 }
 
 impl<T: Tag> Serialize<tags::Option<T>> for &() {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_none()
     }
 
@@ -64,7 +64,7 @@ impl<T: Tag> Serialize<tags::Option<T>> for &() {
 }
 
 impl<T: Tag> Deserialize<tags::Option<T>> for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_none()
     }
 }
@@ -79,7 +79,7 @@ impl<T: Introspectable> Introspectable for Option<T> {
         LexicalId::option(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }

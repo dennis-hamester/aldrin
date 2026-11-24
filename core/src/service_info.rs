@@ -69,7 +69,7 @@ impl PrimaryTag for ServiceInfo {
 }
 
 impl Serialize<Self> for ServiceInfo {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(ServiceInfoField::Version, self.version)?;
@@ -87,13 +87,13 @@ impl Serialize<Self> for ServiceInfo {
 }
 
 impl Serialize<ServiceInfo> for &ServiceInfo {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<Self> for ServiceInfo {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut version = None;

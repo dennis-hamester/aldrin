@@ -17,7 +17,7 @@ impl DuplicateStructField {
         fields: &[StructField],
         fallback: Option<&StructFallback>,
         ident: Option<&Ident>,
-        validate: &mut Validate,
+        validate: &mut Validate<'_>,
     ) {
         util::find_duplicates(
             fields,

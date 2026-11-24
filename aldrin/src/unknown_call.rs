@@ -186,7 +186,7 @@ impl UnknownCall {
     }
 
     /// Polls whether the call was aborted by the caller.
-    pub fn poll_aborted(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_aborted(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         self.inner.as_mut().unwrap().poll_aborted(cx)
     }
 
@@ -205,7 +205,7 @@ impl Drop for UnknownCall {
 }
 
 impl fmt::Display for UnknownCall {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "unknown function {} called", self.id())
     }
 }

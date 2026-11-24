@@ -12,7 +12,7 @@ pub struct Ident {
 }
 
 impl Ident {
-    pub(crate) fn parse(pair: &Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: &Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::ident);
 
         Self {
@@ -21,7 +21,7 @@ impl Ident {
         }
     }
 
-    pub(crate) fn validate(&self, is_def: bool, validate: &mut Validate) {
+    pub(crate) fn validate(&self, is_def: bool, validate: &mut Validate<'_>) {
         if is_def {
             InvalidIdent::validate(self, validate);
             ReservedIdent::validate(self, validate);

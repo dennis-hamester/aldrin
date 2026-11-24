@@ -17,7 +17,7 @@ impl DuplicateEnumVariant {
         vars: &[EnumVariant],
         fallback: Option<&EnumFallback>,
         ident: Option<&Ident>,
-        validate: &mut Validate,
+        validate: &mut Validate<'_>,
     ) {
         util::find_duplicates(
             vars,

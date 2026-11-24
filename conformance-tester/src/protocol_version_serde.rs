@@ -24,7 +24,7 @@ struct VersionVisitor;
 impl Visitor<'_> for VersionVisitor {
     type Value = ProtocolVersion;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(formatter, "a protocol version of the form MAJOR.MINOR")
     }
 
@@ -42,7 +42,7 @@ struct OptionalVersionVisitor;
 impl<'de> Visitor<'de> for OptionalVersionVisitor {
     type Value = Option<ProtocolVersion>;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             formatter,
             "a protocol version of the form MAJOR.MINOR or none"

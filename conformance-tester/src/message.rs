@@ -858,7 +858,7 @@ impl From<ChannelEnd> for aldrin_core::ChannelEnd {
 }
 
 impl fmt::Display for ChannelEnd {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Sender => f.pad("sender"),
             Self::Receiver => f.pad("receiver"),
@@ -893,7 +893,7 @@ impl From<ChannelEndWithCapacity> for aldrin_core::ChannelEndWithCapacity {
 }
 
 impl fmt::Display for ChannelEndWithCapacity {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Sender => f.pad("sender"),
             Self::Receiver { .. } => f.pad("receiver"),

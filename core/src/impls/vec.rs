@@ -13,7 +13,7 @@ macro_rules! impl_vec {
         }
 
         impl<T: Tag, U: Serialize<T>> Serialize<tags::Vec<T>> for $ty<U> {
-            fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                 serializer.serialize_vec2_iter(self)
             }
         }
@@ -23,13 +23,13 @@ macro_rules! impl_vec {
             T: Tag,
             &'a U: Serialize<T>,
         {
-            fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                 serializer.serialize_vec2_iter(self)
             }
         }
 
         impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Vec<T>> for $ty<U> {
-            fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
                 deserializer.deserialize_vec_extend_new()
             }
         }
@@ -44,7 +44,7 @@ macro_rules! impl_vec {
                 LexicalId::vec(T::lexical_id())
             }
 
-            fn add_references(references: &mut References) {
+            fn add_references(references: &mut References<'_>) {
                 references.add::<T>();
             }
         }
@@ -64,7 +64,7 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self)
     }
 }
@@ -79,7 +79,7 @@ impl<T: Introspectable> Introspectable for [T] {
         LexicalId::vec(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -89,7 +89,7 @@ impl<T: PrimaryTag, const N: usize> PrimaryTag for [T; N] {
 }
 
 impl<T: Tag, U: Serialize<T>, const N: usize> Serialize<tags::Vec<T>> for [U; N] {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self)
     }
 }
@@ -99,13 +99,13 @@ where
     T: Tag,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self)
     }
 }
 
 impl<T: Tag, U: Deserialize<T>, const N: usize> Deserialize<tags::Vec<T>> for [U; N] {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_vec()?;
         let mut arr = [const { MaybeUninit::<U>::uninit() }; N];
         let mut num = 0;
@@ -164,7 +164,7 @@ impl<T: Introspectable, const N: usize> Introspectable for [T; N] {
         LexicalId::array(T::lexical_id(), N as u32)
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -174,7 +174,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self)
     }
 }
@@ -184,7 +184,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.iter().copied())
     }
 }
@@ -194,7 +194,7 @@ where
     T: Tag,
     u8: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer
             .deserialize_vec_extend_new::<T, u8, Vec<u8>>()
             .map(Self::from)
@@ -206,7 +206,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self)
     }
 }
@@ -216,7 +216,7 @@ where
     T: Tag,
     u8: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.iter().copied())
     }
 }
@@ -226,25 +226,25 @@ where
     T: Tag,
     u8: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec_extend_new::<T, u8, _>()
     }
 }
 
 impl<T: Tag> Serialize<tags::Vec<T>> for () {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2()?.finish()
     }
 }
 
 impl<T: Tag> Serialize<tags::Vec<T>> for &() {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2()?.finish()
     }
 }
 
 impl<T: Tag> Deserialize<tags::Vec<T>> for () {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_vec()?.finish(())
     }
 }

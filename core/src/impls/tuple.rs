@@ -18,10 +18,11 @@ macro_rules! impl_tuple {
                 $gen: Serialize<$tag>,
             )+
         {
-            fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                 let mut serializer = serializer.serialize_struct2()?;
 
                 $(
+                    #[expect(trivial_numeric_casts)]
                     serializer.serialize($idx as u32, self.$idx)?;
                 )+
 
@@ -36,11 +37,11 @@ macro_rules! impl_tuple {
                 $gen: Deserialize<$tag>,
             )+
         {
-            fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+            fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
                 let mut deserializer = deserializer.deserialize_struct()?;
 
                 $(
-                    #[allow(non_snake_case)]
+                    #[expect(non_snake_case)]
                     let mut $gen = None;
                 )+
 
@@ -64,10 +65,11 @@ macro_rules! impl_tuple {
                 &'a $gen: Serialize<$tag>,
             )+
         {
-            fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+            fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                 let mut serializer = serializer.serialize_struct2()?;
 
                 $(
+                    #[expect(trivial_numeric_casts)]
                     serializer.serialize($idx as u32, &self.$idx)?;
                 )+
 
@@ -105,7 +107,7 @@ macro_rules! impl_tuple {
                 )
             }
 
-            fn add_references(references: &mut References) {
+            fn add_references(references: &mut References<'_>) {
                 let types: [DynIntrospectable; $len] = [
                     $( DynIntrospectable::new::<$gen>() ),+
                 ];

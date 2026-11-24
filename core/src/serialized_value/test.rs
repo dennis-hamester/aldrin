@@ -23,7 +23,7 @@ fn concrete_vs_vague() {
         T2: Tag,
         U2: Serialize<T2>,
     {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize(1u32, self.field1)?;
@@ -40,7 +40,7 @@ fn concrete_vs_vague() {
         T2: Tag,
         &'a U2: Serialize<T2>,
     {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize(1u32, &self.field1)?;
@@ -57,7 +57,7 @@ fn concrete_vs_vague() {
         T2: Tag,
         U2: Deserialize<T2>,
     {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
 
             let mut field1 = None;
@@ -85,7 +85,7 @@ fn concrete_vs_vague() {
 
     let concrete = Concrete {
         field1: 0x1234,
-        field2: "0x1234".to_string(),
+        field2: "0x1234".to_owned(),
     };
 
     let vague = Vague {

@@ -27,11 +27,17 @@ impl<T> Buffered<T> {
 impl<T: AsyncTransport> AsyncTransport for Buffered<T> {
     type Error = T::Error;
 
-    fn receive_poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<Message, Self::Error>> {
+    fn receive_poll(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<Message, Self::Error>> {
         self.project().inner.receive_poll(cx)
     }
 
-    fn send_poll_ready(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_ready(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         Poll::Ready(Ok(()))
     }
 
@@ -40,7 +46,10 @@ impl<T: AsyncTransport> AsyncTransport for Buffered<T> {
         Ok(())
     }
 
-    fn send_poll_flush(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+    fn send_poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), Self::Error>> {
         let mut this = self.project();
 
         while !this.buffer.is_empty() {

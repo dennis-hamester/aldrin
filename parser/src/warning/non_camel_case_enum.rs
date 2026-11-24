@@ -12,7 +12,7 @@ pub(crate) struct NonCamelCaseEnum {
 }
 
 impl NonCamelCaseEnum {
-    pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate) {
+    pub(crate) fn validate(enum_def: &EnumDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(enum_def.name().value()) {
             return;
         }

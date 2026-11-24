@@ -12,7 +12,7 @@ pub(crate) struct ReservedSchemaName {
 }
 
 impl ReservedSchemaName {
-    pub(crate) fn validate(schema_name: &str, validate: &mut Validate) {
+    pub(crate) fn validate(schema_name: &str, validate: &mut Validate<'_>) {
         if let Some(usage) = util::is_reserved_name(schema_name) {
             validate.add_warning(Self {
                 schema_name: schema_name.to_owned(),

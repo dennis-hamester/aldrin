@@ -55,7 +55,7 @@ enum Command {
 }
 
 #[derive(Parser)]
-pub struct Play {
+struct Play {
     /// The title of the track to play.
     title: String,
 
@@ -73,7 +73,7 @@ pub struct Play {
 }
 
 #[derive(Parser)]
-pub struct ServerArg {
+struct ServerArg {
     /// UUID of the server to use.
     ///
     /// If this is not specified, then the first server is used that is found.
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidTitle => write!(f, "invalid title"),
             Self::NotPlaying => write!(f, "not playing"),

@@ -13,7 +13,7 @@ pub(crate) struct InvalidArrayLen {
 }
 
 impl InvalidArrayLen {
-    pub(crate) fn validate(len: &ArrayLen, validate: &mut Validate) {
+    pub(crate) fn validate(len: &ArrayLen, validate: &mut Validate<'_>) {
         let (value, const_def) = match len.value() {
             ArrayLenValue::Literal(lit) => (lit.value(), None),
 

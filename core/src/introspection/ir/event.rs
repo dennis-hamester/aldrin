@@ -48,7 +48,7 @@ impl PrimaryTag for EventIr {
 }
 
 impl Serialize<EventIr> for &EventIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(EventField::Id, &self.id)?;

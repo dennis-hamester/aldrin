@@ -3,7 +3,6 @@ use aldrin_broker::Broker;
 use aldrin_core::{ObjectUuid, ServiceUuid, channel};
 use aldrin_test::aldrin::low_level::{Proxy, ServiceInfo};
 use aldrin_test::tokio::TestBroker;
-use std::mem;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use std::time::Duration;
@@ -14,7 +13,7 @@ struct PollOnce<Fut>(Fut);
 impl<Fut: Future + Unpin> Future for PollOnce<Fut> {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let _ = Pin::new(&mut self.0).poll(cx);
         Poll::Ready(())
     }
@@ -33,7 +32,7 @@ async fn client_stops_when_last_handle_is_dropped() {
     let _ = client.clone();
     let _ = client.clone();
     let _ = client.clone();
-    mem::drop(client);
+    drop(client);
 
     time::timeout(Duration::from_millis(100), join)
         .await

@@ -72,13 +72,13 @@ impl PrimaryTag for Value {
 }
 
 impl Serialize<tags::Value> for Value {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<tags::Value> for &Value {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Value::None => serializer.serialize_none(),
             Value::Some(value) => serializer.serialize_some(value),
@@ -135,7 +135,7 @@ impl Serialize<tags::Value> for &Value {
 }
 
 impl Deserialize<tags::Value> for Value {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         match deserializer.peek_value_kind()? {
             ValueKind::None => deserializer.deserialize_none().map(|()| Self::None),
             ValueKind::Some => deserializer.deserialize_some().map(Self::Some),
@@ -345,7 +345,7 @@ impl Introspectable for Value {
         LexicalId::VALUE
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -364,13 +364,13 @@ impl PrimaryTag for Struct {
 }
 
 impl Serialize<Self> for Struct {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<Struct> for &Struct {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         for (&id, field) in &self.0 {
@@ -382,7 +382,7 @@ impl Serialize<Struct> for &Struct {
 }
 
 impl Deserialize<Self> for Struct {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
         let mut value = HashMap::new();
 
@@ -422,13 +422,13 @@ impl PrimaryTag for Enum {
 }
 
 impl Serialize<Self> for Enum {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Deserialize<Self> for Enum {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         let id = deserializer.id();
@@ -439,7 +439,7 @@ impl Deserialize<Self> for Enum {
 }
 
 impl Serialize<Enum> for &Enum {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_enum(self.id, &self.value)
     }
 }

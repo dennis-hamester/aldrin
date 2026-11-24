@@ -221,7 +221,7 @@ where
     /// Polls whether the discoverer has finished.
     ///
     /// See [`wait_finished`](Self::wait_finished) for more information.
-    pub fn poll_finished(&mut self, cx: &mut Context) -> Poll<()> {
+    pub fn poll_finished(&mut self, cx: &mut Context<'_>) -> Poll<()> {
         loop {
             match self.poll_next_event(cx) {
                 Poll::Ready(Some(_)) => {}
@@ -315,7 +315,7 @@ where
     }
 
     /// Polls the discoverer for an event.
-    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<DiscovererEvent<Key>>> {
+    pub fn poll_next_event(&mut self, cx: &mut Context<'_>) -> Poll<Option<DiscovererEvent<Key>>> {
         if self.entries.is_empty() {
             return Poll::Ready(None);
         }
@@ -353,7 +353,7 @@ where
 {
     type Item = DiscovererEvent<Key>;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         self.poll_next_event(cx)
     }
 }

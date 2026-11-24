@@ -51,7 +51,7 @@ impl<T> UnclaimedSender<T> {
     /// Initiates closing the sender and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -127,7 +127,7 @@ impl<T> UnclaimedSender<T> {
 }
 
 impl<T> fmt::Debug for UnclaimedSender<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnclaimedSender")
             .field("inner", &self.inner)
             .finish()
@@ -180,7 +180,7 @@ impl<T> UnclaimedReceiver<T> {
     /// Initiates closing the receiver and polls for progress.
     ///
     /// See [`close`](Self::close) for more information.
-    pub fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         self.inner.poll_close(cx)
     }
 
@@ -256,7 +256,7 @@ impl<T> UnclaimedReceiver<T> {
 }
 
 impl<T> fmt::Debug for UnclaimedReceiver<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnclaimedReceiver")
             .field("inner", &self.inner)
             .finish()

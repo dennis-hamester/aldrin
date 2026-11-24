@@ -61,7 +61,7 @@ impl Broker {
                 if status.success() {
                     Ok(())
                 } else if let Some(code) = status.code() {
-                    Err(anyhow!("broker shut down with code {}", code))
+                    Err(anyhow!("broker shut down with code {code}"))
                 } else {
                     Err(anyhow!("broker didn't shut down successfully"))
                 }

@@ -8,19 +8,19 @@ impl PrimaryTag for String {
 }
 
 impl Serialize<tags::String> for String {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<tags::String> for &String {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
     }
 }
 
 impl Deserialize<tags::String> for String {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_string()
     }
 }
@@ -35,7 +35,7 @@ impl Introspectable for String {
         LexicalId::STRING
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }
 
 impl PrimaryTag for str {
@@ -43,7 +43,7 @@ impl PrimaryTag for str {
 }
 
 impl Serialize<tags::String> for &str {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_string(self)
     }
 }
@@ -58,5 +58,5 @@ impl Introspectable for str {
         LexicalId::STRING
     }
 
-    fn add_references(_references: &mut References) {}
+    fn add_references(_references: &mut References<'_>) {}
 }

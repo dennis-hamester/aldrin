@@ -114,7 +114,7 @@ async fn connect1_with_data_accept() {
         let mut handle = broker.handle().clone();
         let mut acceptor = Acceptor::new(t2).await.unwrap();
 
-        assert!(acceptor.version() == ProtocolVersion::V1_14);
+        assert_eq!(acceptor.version(), ProtocolVersion::V1_14);
 
         assert_eq!(
             acceptor
@@ -142,7 +142,7 @@ async fn connect1_with_data_reject() {
     tokio::spawn(async {
         let mut acceptor = Acceptor::new(t2).await.unwrap();
 
-        assert!(acceptor.version() == ProtocolVersion::V1_14);
+        assert_eq!(acceptor.version(), ProtocolVersion::V1_14);
 
         assert_eq!(
             acceptor
@@ -175,7 +175,7 @@ async fn connect1_accept() {
         let mut handle = broker.handle().clone();
         let acceptor = Acceptor::new(t2).await.unwrap();
 
-        assert!(acceptor.version() == ProtocolVersion::V1_14);
+        assert_eq!(acceptor.version(), ProtocolVersion::V1_14);
         acceptor.client_data().unwrap().deserialize::<()>().unwrap();
 
         let _ = acceptor.accept(&mut handle).await.unwrap();
@@ -192,7 +192,7 @@ async fn connect1_reject() {
     tokio::spawn(async {
         let acceptor = Acceptor::new(t2).await.unwrap();
 
-        assert!(acceptor.version() == ProtocolVersion::V1_14);
+        assert_eq!(acceptor.version(), ProtocolVersion::V1_14);
         acceptor.client_data().unwrap().deserialize::<()>().unwrap();
 
         acceptor.reject().await.unwrap();

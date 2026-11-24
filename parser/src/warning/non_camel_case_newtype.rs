@@ -12,7 +12,7 @@ pub(crate) struct NonCamelCaseNewtype {
 }
 
 impl NonCamelCaseNewtype {
-    pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate) {
+    pub(crate) fn validate(newtype_def: &NewtypeDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(newtype_def.name().value()) {
             return;
         }

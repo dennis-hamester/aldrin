@@ -129,7 +129,7 @@ impl Proxy {
     /// only guaranteed to be returned if the client has shut down.
     ///
     /// On protocol version 1.18 or later, `None` is also returned if the service was destroyed.
-    pub fn poll_next_event(&mut self, cx: &mut Context) -> Poll<Option<Event>> {
+    pub fn poll_next_event(&mut self, cx: &mut Context<'_>) -> Poll<Option<Event>> {
         Pin::new(&mut self.recv).poll_next(cx)
     }
 
@@ -162,7 +162,7 @@ impl Drop for Proxy {
 impl Stream for Proxy {
     type Item = Event;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Event>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Event>> {
         self.poll_next_event(cx)
     }
 }

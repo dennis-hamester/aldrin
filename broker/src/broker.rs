@@ -974,6 +974,7 @@ impl Broker {
         }
     }
 
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn emit_event(&mut self, state: &mut State, id: &ConnectionId, req: &EmitEvent) {
         let Some(emitter_conn) = self.conns.get(id) else {
             return;
@@ -1001,6 +1002,7 @@ impl Broker {
         }
     }
 
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn query_service_version(
         &mut self,
         id: &ConnectionId,
@@ -1285,6 +1287,7 @@ impl Broker {
         }
     }
 
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn sync(&mut self, id: &ConnectionId, req: Sync) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -1562,7 +1565,7 @@ impl Broker {
     }
 
     fn abort_function_call(
-        &mut self,
+        &self,
         state: &mut State,
         id: &ConnectionId,
         req: AbortFunctionCall,
@@ -1686,6 +1689,7 @@ impl Broker {
     }
 
     #[cfg(not(feature = "introspection"))]
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn query_introspection(
         &mut self,
         _state: &mut State,
@@ -1805,7 +1809,7 @@ impl Broker {
     #[cfg(not(feature = "introspection"))]
     #[expect(clippy::unused_self)]
     fn query_introspection_reply(
-        &mut self,
+        &self,
         _state: &mut State,
         _id: &ConnectionId,
         _req: QueryIntrospectionReply,
@@ -1896,6 +1900,7 @@ impl Broker {
         Ok(())
     }
 
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn query_service_info(&mut self, id: &ConnectionId, req: QueryServiceInfo) -> Result<(), ()> {
         let Some(conn) = self.conns.get(id) else {
             return Ok(());
@@ -2093,6 +2098,7 @@ impl Broker {
         }
 
         let Some(&(obj_id, svc_uuid, _)) = self.svc_uuids.get(&req.service_cookie) else {
+            #[expect(clippy::redundant_else)]
             if let Some(serial) = req.serial {
                 return send!(
                     self,
@@ -2116,6 +2122,7 @@ impl Broker {
         let target_conn = self.conns.get(target_conn_id).expect("inconsistent state");
 
         if target_conn.version() < ProtocolVersion::V1_18 {
+            #[expect(clippy::redundant_else)]
             if let Some(serial) = req.serial {
                 return send!(
                     self,
@@ -2369,6 +2376,7 @@ impl Broker {
         }
     }
 
+    #[cfg_attr(not(feature = "statistics"), expect(clippy::needless_pass_by_ref_mut))]
     fn emit_bus_event(&mut self, state: &mut State, event: BusEvent) {
         #[expect(clippy::mutable_key_type)]
         let mut dups = HashSet::new();

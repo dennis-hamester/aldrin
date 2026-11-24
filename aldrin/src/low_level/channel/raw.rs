@@ -43,7 +43,7 @@ impl<const SENDER: bool> RawChannel<SENDER> {
         self.state.is_open()
     }
 
-    pub(crate) fn poll_close(&mut self, cx: &mut Context) -> Poll<Result<(), Error>> {
+    pub(crate) fn poll_close(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Error>> {
         let mut closing = match mem::replace(&mut self.state, State::Closed) {
             State::Open => self.begin_close()?,
             State::Closing(closing) => closing,
@@ -75,7 +75,7 @@ impl<const SENDER: bool> RawChannel<SENDER> {
         self.claimed = true;
     }
 
-    fn begin_close(&mut self) -> Result<CloseChannelEndFuture, Error> {
+    fn begin_close(&self) -> Result<CloseChannelEndFuture, Error> {
         self.client
             .close_channel_end(self.cookie, Self::channel_end(), self.claimed)
     }

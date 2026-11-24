@@ -137,7 +137,7 @@ pub(crate) fn did_you_mean_key_type<'a>(
     schema: &'a Schema,
     name: &str,
     with_builtins: bool,
-    validate: &Validate,
+    validate: &Validate<'_>,
 ) -> Option<&'a str> {
     let candidates = schema
         .definitions()
@@ -210,7 +210,7 @@ where
 pub(crate) fn resolves_to_key_type<'a>(
     mut kind: &'a TypeNameKind,
     mut schema: &'a Schema,
-    validate: &'a Validate,
+    validate: &'a Validate<'_>,
 ) -> Result<(), InvalidKeyTypeKind<'a>> {
     let mut seen = HashSet::new();
     let mut is_newtype = false;
@@ -245,7 +245,9 @@ pub(crate) fn resolves_to_key_type<'a>(
             | TypeNameKind::Lifetime
             | TypeNameKind::Unit
             | TypeNameKind::Result(_, _)
-            | TypeNameKind::Array(_, _) => {
+            | TypeNameKind::Array(_, _) =>
+            {
+                #[expect(clippy::redundant_else)]
                 if is_newtype {
                     break Err(InvalidKeyTypeKind::NewtypeToBuiltIn(kind));
                 } else {
@@ -278,7 +280,9 @@ pub(crate) fn resolves_to_key_type<'a>(
             .ok_or(InvalidKeyTypeKind::Other)?;
 
         match def {
-            Definition::Struct(def) => {
+            Definition::Struct(def) =>
+            {
+                #[expect(clippy::redundant_else)]
                 if is_newtype {
                     break Err(InvalidKeyTypeKind::NewtypeToStruct(new_schema, def));
                 } else {
@@ -286,7 +290,9 @@ pub(crate) fn resolves_to_key_type<'a>(
                 }
             }
 
-            Definition::Enum(def) => {
+            Definition::Enum(def) =>
+            {
+                #[expect(clippy::redundant_else)]
                 if is_newtype {
                     break Err(InvalidKeyTypeKind::NewtypeToEnum(new_schema, def));
                 } else {
@@ -333,7 +339,7 @@ impl Language {
         struct FmtList(&'static [Language]);
 
         impl fmt::Display for FmtList {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 for (i, lang) in self.0.iter().enumerate() {
                     if i > 0 {
                         if i < (self.0.len() - 1) {
@@ -355,7 +361,7 @@ impl Language {
 }
 
 impl fmt::Display for Language {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Rust => write!(f, "Rust"),
         }
@@ -369,7 +375,7 @@ pub(crate) enum ReservedKind {
 }
 
 impl fmt::Display for ReservedKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Builtin => write!(f, "a built-in type"),
             Self::Keyword => write!(f, "a keyword"),

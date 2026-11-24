@@ -12,7 +12,7 @@ pub(crate) struct DuplicateImport {
 }
 
 impl DuplicateImport {
-    pub(crate) fn validate(schema: &Schema, validate: &mut Validate) {
+    pub(crate) fn validate(schema: &Schema, validate: &mut Validate<'_>) {
         util::find_duplicates(
             schema.imports(),
             |import| import.schema_name().value(),

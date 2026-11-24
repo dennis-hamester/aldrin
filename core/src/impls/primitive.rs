@@ -28,20 +28,20 @@ macro_rules! impl_primitive {
                     LexicalId::$lexid
                 }
 
-                fn add_references(_references: &mut References) {}
+                fn add_references(_references: &mut References<'_>) {}
             }
         )+
 
         $(
             impl Serialize<$tag> for $ser_for {
-                fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+                fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                     let val = self.try_into().map_err(|_| SerializeError::UnexpectedValue)?;
                     serializer.$ser_fn(val)
                 }
             }
 
             impl Serialize<$tag> for & $ser_for {
-                fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+                fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
                     serializer.serialize::<$tag>(*self)
                 }
             }
@@ -49,7 +49,7 @@ macro_rules! impl_primitive {
 
         $(
             impl Deserialize<$tag> for $de_for {
-                fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+                fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
                     deserializer.$de_fn()?.try_into().map_err(|_| DeserializeError::UnexpectedValue)
                 }
             }

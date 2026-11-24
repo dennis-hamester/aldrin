@@ -63,13 +63,13 @@ enum_with_repr! {
 }
 
 impl Serialize<Self> for ConnectReplyData {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<ConnectReplyData> for &ConnectReplyData {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize_if_some::<tags::Option<tags::Value>>(
@@ -82,7 +82,7 @@ impl Serialize<ConnectReplyData> for &ConnectReplyData {
 }
 
 impl Deserialize<Self> for ConnectReplyData {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut user = None;

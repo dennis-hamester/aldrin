@@ -10,19 +10,19 @@ pub(crate) struct Prelude {
 }
 
 impl Prelude {
-    pub(crate) fn schema(pairs: &mut Pairs<Rule>) -> Self {
+    pub(crate) fn schema(pairs: &mut Pairs<'_, Rule>) -> Self {
         Self::new_impl(pairs, true, true)
     }
 
-    pub(crate) fn regular(pairs: &mut Pairs<Rule>) -> Self {
+    pub(crate) fn regular(pairs: &mut Pairs<'_, Rule>) -> Self {
         Self::new_impl(pairs, true, false)
     }
 
-    pub(crate) fn inline(pairs: &mut Pairs<Rule>) -> Self {
+    pub(crate) fn inline(pairs: &mut Pairs<'_, Rule>) -> Self {
         Self::new_impl(pairs, false, true)
     }
 
-    fn new_impl(pairs: &mut Pairs<Rule>, allow_comments: bool, inline: bool) -> Self {
+    fn new_impl(pairs: &mut Pairs<'_, Rule>, allow_comments: bool, inline: bool) -> Self {
         let mut comment = Vec::new();
         let mut doc = Vec::new();
         let mut attrs = Vec::new();

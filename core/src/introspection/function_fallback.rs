@@ -50,13 +50,13 @@ impl PrimaryTag for FunctionFallback {
 }
 
 impl Serialize<Self> for FunctionFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<FunctionFallback> for &FunctionFallback {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(FunctionFallbackField::Name, &self.name)?;
@@ -71,7 +71,7 @@ impl Serialize<FunctionFallback> for &FunctionFallback {
 }
 
 impl Deserialize<Self> for FunctionFallback {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut name = None;

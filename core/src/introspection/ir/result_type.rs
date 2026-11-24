@@ -37,7 +37,7 @@ impl PrimaryTag for ResultTypeIr {
 }
 
 impl Serialize<ResultTypeIr> for &ResultTypeIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<LexicalId>(ResultTypeField::Ok, &self.ok)?;

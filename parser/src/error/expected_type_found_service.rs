@@ -12,7 +12,7 @@ pub(crate) struct ExpectedTypeFoundService {
 }
 
 impl ExpectedTypeFoundService {
-    pub(crate) fn validate(named_ref: &NamedRef, is_key_type: bool, validate: &mut Validate) {
+    pub(crate) fn validate(named_ref: &NamedRef, is_key_type: bool, validate: &mut Validate<'_>) {
         let (schema, ident, intern) = match named_ref.kind() {
             NamedRefKind::Intern(ident) => (validate.get_current_schema(), ident, true),
 

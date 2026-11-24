@@ -59,7 +59,7 @@ impl PrimaryTag for NewtypeIr {
 }
 
 impl Serialize<NewtypeIr> for &NewtypeIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::String>(NewtypeField::Schema, &self.schema)?;

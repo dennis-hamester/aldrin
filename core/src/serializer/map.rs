@@ -69,7 +69,7 @@ impl<'a, K: KeyTag> Map1Serializer<'a, K> {
 }
 
 impl<K> fmt::Debug for Map1Serializer<'_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Map1Serializer");
 
         f.field("buf", &self.buf);
@@ -119,7 +119,7 @@ impl<'a, K: KeyTag> Map2Serializer<'a, K> {
 }
 
 impl<K> fmt::Debug for Map2Serializer<'_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Map2Serializer");
 
         f.field("buf", &self.buf);

@@ -67,7 +67,7 @@ impl DocString {
 }
 
 impl Parse for DocString {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let mut doc = Self::new();
 
         let attrs = input.call(Attribute::parse_outer)?;

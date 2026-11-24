@@ -3,7 +3,7 @@ use crate::tags::{PrimaryTag, Tag};
 use thiserror::Error;
 
 pub trait Serialize<T: Tag>: Sized {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError>;
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError>;
 
     fn serializes_as_some(&self) -> bool {
         true

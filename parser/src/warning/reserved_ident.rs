@@ -13,7 +13,7 @@ pub(crate) struct ReservedIdent {
 }
 
 impl ReservedIdent {
-    pub(crate) fn validate(ident: &Ident, validate: &mut Validate) {
+    pub(crate) fn validate(ident: &Ident, validate: &mut Validate<'_>) {
         if let Some(usage) = util::is_reserved_name(ident.value()) {
             validate.add_warning(Self {
                 schema_name: validate.schema_name().to_owned(),

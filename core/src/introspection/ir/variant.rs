@@ -48,7 +48,7 @@ impl PrimaryTag for VariantIr {
 }
 
 impl Serialize<VariantIr> for &VariantIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<tags::U32>(VariantField::Id, &self.id)?;

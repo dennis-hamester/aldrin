@@ -14,7 +14,11 @@ pub(crate) struct DuplicateStructFieldId {
 }
 
 impl DuplicateStructFieldId {
-    pub(crate) fn validate(fields: &[StructField], ident: Option<&Ident>, validate: &mut Validate) {
+    pub(crate) fn validate(
+        fields: &[StructField],
+        ident: Option<&Ident>,
+        validate: &mut Validate<'_>,
+    ) {
         let mut max_id = fields
             .iter()
             .filter_map(|field| field.id().value().parse().ok())

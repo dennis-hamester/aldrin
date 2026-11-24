@@ -109,7 +109,7 @@ impl<T> From<ChannelCookie> for UnboundSender<T> {
 }
 
 impl<T> fmt::Debug for UnboundSender<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnboundSender")
             .field("inner", &self.inner)
             .finish()
@@ -129,19 +129,19 @@ impl<T: PrimaryTag> PrimaryTag for UnboundSender<T> {
 }
 
 impl<T: Tag, U: Serialize<T>> Serialize<tags::Sender<T>> for UnboundSender<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Sender<T>>(self.inner)
     }
 }
 
 impl<T: Tag, U: Serialize<T>> Serialize<tags::Sender<T>> for &UnboundSender<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl<T: Tag, U: Serialize<T>> Deserialize<tags::Sender<T>> for UnboundSender<U> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer
             .deserialize::<tags::Sender<T>, _>()
             .map(low_level::UnboundSender::cast)
@@ -158,7 +158,7 @@ impl<T: Introspectable> Introspectable for UnboundSender<T> {
         LexicalId::sender(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -265,7 +265,7 @@ impl<T> From<ChannelCookie> for UnboundReceiver<T> {
 }
 
 impl<T> fmt::Debug for UnboundReceiver<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UnclaimedReceiver")
             .field("inner", &self.inner)
             .finish()
@@ -285,19 +285,19 @@ impl<T: PrimaryTag> PrimaryTag for UnboundReceiver<T> {
 }
 
 impl<T: Tag, U: Deserialize<T>> Serialize<tags::Receiver<T>> for UnboundReceiver<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Receiver<T>>(self.inner)
     }
 }
 
 impl<T: Tag, U: Deserialize<T>> Serialize<tags::Receiver<T>> for &UnboundReceiver<U> {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl<T: Tag, U: Deserialize<T>> Deserialize<tags::Receiver<T>> for UnboundReceiver<U> {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer
             .deserialize::<tags::Receiver<T>, _>()
             .map(low_level::UnboundReceiver::cast)
@@ -314,7 +314,7 @@ impl<T: Introspectable> Introspectable for UnboundReceiver<T> {
         LexicalId::receiver(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }

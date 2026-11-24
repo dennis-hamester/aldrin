@@ -17,7 +17,7 @@ pub struct NewtypeDef {
 }
 
 impl NewtypeDef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::newtype_def);
 
         let span = Span::from_pair(&pair);
@@ -44,7 +44,7 @@ impl NewtypeDef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         RecursiveNewtype::validate(self, validate);
         NonCamelCaseNewtype::validate(self, validate);

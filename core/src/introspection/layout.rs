@@ -119,13 +119,13 @@ impl PrimaryTag for Layout {
 }
 
 impl Serialize<Self> for Layout {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<Layout> for &Layout {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Layout::BuiltIn(ty) => {
                 serializer.serialize_enum::<BuiltInType>(LayoutVariant::BuiltIn, ty)
@@ -140,7 +140,7 @@ impl Serialize<Layout> for &Layout {
 }
 
 impl Deserialize<Self> for Layout {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.try_id()? {

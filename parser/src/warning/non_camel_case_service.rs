@@ -12,7 +12,7 @@ pub(crate) struct NonCamelCaseService {
 }
 
 impl NonCamelCaseService {
-    pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate) {
+    pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(service_def.name().value()) {
             return;
         }

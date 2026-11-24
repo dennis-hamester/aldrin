@@ -38,7 +38,7 @@ impl PrimaryTag for ArrayTypeIr {
 }
 
 impl Serialize<ArrayTypeIr> for &ArrayTypeIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<LexicalId>(ArrayTypeField::ElemType, &self.elem_type)?;

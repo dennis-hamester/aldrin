@@ -33,13 +33,13 @@ impl PrimaryTag for Value {
 }
 
 impl Serialize<tags::Value> for Value {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<tags::Value> for &Value {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Value::None | Value::Ignore => serializer.serialize_none()?,
             Value::I32(value) => serializer.serialize_i32(*value)?,
@@ -51,7 +51,7 @@ impl Serialize<tags::Value> for &Value {
 }
 
 impl Deserialize<tags::Value> for Value {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         #[expect(clippy::wildcard_enum_match_arm)]
         match deserializer.peek_value_kind()? {
             ValueKind::None => deserializer.deserialize_none().map(|()| Self::None),

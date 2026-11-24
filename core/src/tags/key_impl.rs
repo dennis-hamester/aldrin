@@ -3,7 +3,6 @@ use crate::buf_ext::{BufMutExt, ValueBufExt};
 use crate::{DeserializeError, SerializeError, ValueConversionError, ValueKind};
 use bytes::{Buf, BufMut, BytesMut};
 use std::borrow::Cow;
-use std::mem;
 
 #[expect(unnameable_types)]
 pub trait Sealed {}
@@ -132,7 +131,7 @@ impl KeyTagImpl for U16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -162,7 +161,7 @@ impl KeyTagImpl for I16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -192,7 +191,7 @@ impl KeyTagImpl for U32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -222,7 +221,7 @@ impl KeyTagImpl for I32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -252,7 +251,7 @@ impl KeyTagImpl for U64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -282,7 +281,7 @@ impl KeyTagImpl for I64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ mem::size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {

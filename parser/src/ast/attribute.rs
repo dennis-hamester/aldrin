@@ -11,17 +11,17 @@ pub struct Attribute {
 }
 
 impl Attribute {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::attribute);
         Self::parse_impl(pair)
     }
 
-    pub(crate) fn parse_inline(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse_inline(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::attribute_inline);
         Self::parse_impl(pair)
     }
 
-    fn parse_impl(pair: Pair<Rule>) -> Self {
+    fn parse_impl(pair: Pair<'_, Rule>) -> Self {
         let span = Span::from_pair(&pair);
 
         let mut pairs = pair.into_inner();

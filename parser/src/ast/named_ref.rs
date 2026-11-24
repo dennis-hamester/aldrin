@@ -13,7 +13,7 @@ pub struct NamedRef {
 }
 
 impl NamedRef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::named_ref);
 
         let span = Span::from_pair(&pair);
@@ -32,7 +32,7 @@ impl NamedRef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         self.kind.validate(validate);
     }
 
@@ -60,7 +60,7 @@ pub enum NamedRefKind {
 }
 
 impl NamedRefKind {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         #[expect(clippy::wildcard_enum_match_arm)]
         match pair.as_rule() {
             Rule::ident => Self::Intern(Ident::parse(&pair)),
@@ -79,7 +79,7 @@ impl NamedRefKind {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         match self {
             Self::Intern(ty) => {
                 ty.validate(false, validate);
@@ -107,7 +107,7 @@ impl NamedRefKind {
 }
 
 impl fmt::Display for NamedRefKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Intern(ident) => write!(f, "{}", ident.value()),
             Self::Extern(schema, ident) => write!(f, "{}::{}", schema.value(), ident.value()),

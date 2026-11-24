@@ -1329,13 +1329,13 @@ fn test_struct() {
     }
 
     impl Serialize<Tag> for TestStruct {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             serializer.serialize::<Tag>(&self)
         }
     }
 
     impl Serialize<Tag> for &TestStruct {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             let mut serializer = serializer.serialize_struct2()?;
 
             serializer.serialize::<tags::U32>(1u32, &self.field1)?;
@@ -1346,7 +1346,7 @@ fn test_struct() {
     }
 
     impl Deserialize<Tag> for TestStruct {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
 
             let mut field1 = None;
@@ -1401,13 +1401,13 @@ fn test_struct_fallback() {
     }
 
     impl Serialize<Tag> for TestStruct {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             serializer.serialize::<Tag>(&self)
         }
     }
 
     impl Serialize<Tag> for &TestStruct {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             let mut serializer =
                 serializer.serialize_struct2_with_unknown_fields(&self.fallback)?;
 
@@ -1418,7 +1418,7 @@ fn test_struct_fallback() {
     }
 
     impl Deserialize<Tag> for TestStruct {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let mut deserializer = deserializer.deserialize_struct()?;
 
             let mut field1 = None;
@@ -1476,13 +1476,13 @@ fn test_enum() {
     }
 
     impl Serialize<Tag> for TestEnum {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             serializer.serialize::<Tag>(&self)
         }
     }
 
     impl Serialize<Tag> for &TestEnum {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             match self {
                 TestEnum::Var1 => serializer.serialize_unit_enum(1u32),
                 TestEnum::Var2(value) => serializer.serialize_enum::<tags::U8>(2u32, value),
@@ -1491,7 +1491,7 @@ fn test_enum() {
     }
 
     impl Deserialize<Tag> for TestEnum {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
             match deserializer.id() {
@@ -1524,13 +1524,13 @@ fn test_enum_fallback() {
     }
 
     impl Serialize<Tag> for TestEnum {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             serializer.serialize::<Tag>(&self)
         }
     }
 
     impl Serialize<Tag> for &TestEnum {
-        fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+        fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
             match self {
                 TestEnum::Var1 => serializer.serialize_unit_enum(1u32),
                 TestEnum::Fallback(fallback) => serializer.serialize_unknown_variant(fallback),
@@ -1539,7 +1539,7 @@ fn test_enum_fallback() {
     }
 
     impl Deserialize<Tag> for TestEnum {
-        fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+        fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
             let deserializer = deserializer.deserialize_enum()?;
 
             match deserializer.id() {

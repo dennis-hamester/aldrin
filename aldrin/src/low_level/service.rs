@@ -78,7 +78,7 @@ impl Service {
     }
 
     /// Polls for the next call.
-    pub fn poll_next_call(&mut self, cx: &mut Context) -> Poll<Option<Call>> {
+    pub fn poll_next_call(&mut self, cx: &mut Context<'_>) -> Poll<Option<Call>> {
         match Pin::new(&mut self.calls).poll_next(cx) {
             Poll::Ready(Some(call)) => Poll::Ready(Some(Call::new(
                 self.client.clone(),
@@ -121,7 +121,7 @@ impl Drop for Service {
 impl Stream for Service {
     type Item = Call;
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<Call>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Call>> {
         self.poll_next_call(cx)
     }
 }

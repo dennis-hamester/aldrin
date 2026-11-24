@@ -16,13 +16,13 @@ impl PrimaryTag for Old {
 }
 
 impl Serialize<tags::Value> for Old {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Value>(&self)
     }
 }
 
 impl Serialize<tags::Value> for &Old {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Old::Var1 => serializer.serialize_unit_enum(1u32),
             Old::Fallback(fallback) => serializer.serialize_unknown_variant(fallback),
@@ -31,7 +31,7 @@ impl Serialize<tags::Value> for &Old {
 }
 
 impl Deserialize<tags::Value> for Old {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.id() {
@@ -53,13 +53,13 @@ impl PrimaryTag for New {
 }
 
 impl Serialize<tags::Value> for New {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Value>(&self)
     }
 }
 
 impl Serialize<tags::Value> for &New {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             New::Var1 => serializer.serialize_unit_enum(1u32),
             New::Var2(value) => serializer.serialize_enum::<tags::U8>(2u32, value),
@@ -69,7 +69,7 @@ impl Serialize<tags::Value> for &New {
 }
 
 impl Deserialize<tags::Value> for New {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.id() {

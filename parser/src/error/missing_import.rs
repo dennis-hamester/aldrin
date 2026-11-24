@@ -12,7 +12,7 @@ pub(crate) struct MissingImport {
 }
 
 impl MissingImport {
-    pub(crate) fn validate(schema_name: &Ident, validate: &mut Validate) {
+    pub(crate) fn validate(schema_name: &Ident, validate: &mut Validate<'_>) {
         let schema = validate.get_current_schema();
         for import in schema.imports() {
             if import.schema_name().value() == schema_name.value() {

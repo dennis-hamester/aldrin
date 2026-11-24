@@ -99,7 +99,7 @@ impl TryFrom<message::QueryIntrospectionResult> for QueryIntrospectionResult {
             message::QueryIntrospectionResult::Ok(value) => {
                 let value = value
                     .deserialize()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?;
+                    .with_context(|| anyhow!("failed to deserialize value `{value:?}`"))?;
 
                 Ok(Self::Ok { value })
             }

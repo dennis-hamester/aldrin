@@ -17,7 +17,7 @@ impl EmptyEnum {
         fallback: Option<&EnumFallback>,
         span: Span,
         ident: Option<&Ident>,
-        validate: &mut Validate,
+        validate: &mut Validate<'_>,
     ) {
         if !vars.is_empty() || fallback.is_some() {
             return;

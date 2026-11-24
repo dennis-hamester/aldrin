@@ -40,7 +40,7 @@ impl SubprocessError {
 }
 
 impl fmt::Display for SubprocessError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "subprocess `{}` failed", self.command)?;
 
         if let Some(code) = self.code {

@@ -71,7 +71,7 @@ impl TryFrom<message::ConnectReply> for ConnectReply {
             message::ConnectReply::Rejected(value) => {
                 let value = value
                     .deserialize()
-                    .with_context(|| anyhow!("failed to deserialize value `{:?}`", value))?;
+                    .with_context(|| anyhow!("failed to deserialize value `{value:?}`"))?;
 
                 Ok(Self::Rejected { value })
             }

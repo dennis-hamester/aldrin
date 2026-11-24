@@ -12,7 +12,7 @@ pub(crate) struct NonSnakeCaseFunction {
 }
 
 impl NonSnakeCaseFunction {
-    pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate) {
+    pub(crate) fn validate(func: &FunctionDef, validate: &mut Validate<'_>) {
         if !Ident::is_valid(func.name().value()) {
             return;
         }

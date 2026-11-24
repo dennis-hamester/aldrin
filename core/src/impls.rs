@@ -33,7 +33,7 @@ where
     U: ?Sized,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         (*self).serialize(serializer)
     }
 }
@@ -44,7 +44,7 @@ where
     U: ?Sized,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         (&*self).serialize(serializer)
     }
 }
@@ -55,7 +55,7 @@ where
     U: ?Sized,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         (&**self).serialize(serializer)
     }
 }
@@ -70,7 +70,7 @@ impl<T: Introspectable + ?Sized> Introspectable for &T {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -85,7 +85,7 @@ impl<T: Introspectable + ?Sized> Introspectable for &mut T {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -99,7 +99,7 @@ where
     T: Tag,
     U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         (*self).serialize(serializer)
     }
 }
@@ -110,7 +110,7 @@ where
     U: ?Sized,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         (**self).serialize(serializer)
     }
 }
@@ -120,7 +120,7 @@ where
     T: Tag,
     U: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         U::deserialize(deserializer).map(Self::new)
     }
 }
@@ -135,7 +135,7 @@ impl<T: Introspectable + ?Sized> Introspectable for Box<T> {
         LexicalId::box_ty(T::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
     }
 }
@@ -153,7 +153,7 @@ where
     U: 'a + ToOwned + ?Sized,
     for<'b> &'b U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<T>(self.as_ref())
     }
 }
@@ -164,7 +164,7 @@ where
     U: 'b + ToOwned + ?Sized,
     &'a U: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<T>(self.as_ref())
     }
 }
@@ -175,7 +175,7 @@ where
     U: 'a + ToOwned + ?Sized,
     U::Owned: Deserialize<T>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize::<T, _>().map(Self::Owned)
     }
 }

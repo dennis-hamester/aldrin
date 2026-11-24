@@ -43,7 +43,7 @@ impl Select {
         handle: &mut UnboundedReceiver<HandleRequest>,
         function_calls: &mut FunctionCallMap,
         flush_transport: bool,
-        cx: &mut Context,
+        cx: &mut Context<'_>,
     ) -> Poll<Selected<T::Error>>
     where
         T: AsyncTransport + Unpin,

@@ -67,11 +67,11 @@ impl Channel {
             }
 
             // In all of these cases, it's illegal to call close.
-            (ChannelEndState::Unclaimed, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Unclaimed, ChannelEndState::Closed)
-            | (ChannelEndState::Closed, ChannelEndState::Unclaimed)
-            | (ChannelEndState::Closed, ChannelEndState::Claimed { .. })
-            | (ChannelEndState::Closed, ChannelEndState::Closed) => unreachable!(),
+            (
+                ChannelEndState::Unclaimed | ChannelEndState::Closed,
+                ChannelEndState::Unclaimed | ChannelEndState::Closed,
+            )
+            | (ChannelEndState::Closed, ChannelEndState::Claimed { .. }) => unreachable!(),
         }
     }
 
@@ -159,7 +159,7 @@ impl Channel {
         };
 
         if *sender_capacity == 0 {
-            debug_assert!(*receiver_capacity == 0);
+            debug_assert_eq!(*receiver_capacity, 0);
             return Err(SendItemError::CapacityExhausted);
         }
 

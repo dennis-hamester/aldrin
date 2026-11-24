@@ -13,7 +13,7 @@ pub(crate) struct InvalidKeyType {
 }
 
 impl InvalidKeyType {
-    pub(crate) fn validate(ty: &TypeName, validate: &mut Validate) {
+    pub(crate) fn validate(ty: &TypeName, validate: &mut Validate<'_>) {
         let Err(kind) =
             util::resolves_to_key_type(ty.kind(), validate.get_current_schema(), validate)
         else {

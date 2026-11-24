@@ -12,7 +12,7 @@ pub(crate) struct InvalidServiceVersion {
 }
 
 impl InvalidServiceVersion {
-    pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate) {
+    pub(crate) fn validate(service_def: &ServiceDef, validate: &mut Validate<'_>) {
         if service_def.version().value().parse::<u32>().is_ok() {
             return;
         }

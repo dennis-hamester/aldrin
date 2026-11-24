@@ -92,7 +92,7 @@ pub(crate) struct Args {
 }
 
 impl Parse for Args {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let first_schema = lit_str_to_path(&input.parse::<LitStr>()?)?;
 
         let mut args = Self {

@@ -118,7 +118,7 @@ impl PrimaryTag for BuiltInType {
 }
 
 impl Serialize<Self> for BuiltInType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Self::Bool => serializer.serialize_unit_enum(BuiltInTypeVariant::Bool),
             Self::U8 => serializer.serialize_unit_enum(BuiltInTypeVariant::U8),
@@ -161,13 +161,13 @@ impl Serialize<Self> for BuiltInType {
 }
 
 impl Serialize<BuiltInType> for &BuiltInType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<Self> for BuiltInType {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.try_id()? {

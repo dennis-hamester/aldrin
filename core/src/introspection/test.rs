@@ -17,7 +17,7 @@ fn duplicate_lexical_id_good() {
             LexicalId::custom("dup", "Dup")
         }
 
-        fn add_references(references: &mut References) {
+        fn add_references(references: &mut References<'_>) {
             references.add::<()>();
             references.add::<()>();
         }
@@ -27,7 +27,7 @@ fn duplicate_lexical_id_good() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "assertion failed: dup.is_none() || (dup == Some(type_id))")]
 fn duplicate_lexical_id_bad() {
     struct Bad1;
 
@@ -40,7 +40,7 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Bad")
         }
 
-        fn add_references(_references: &mut References) {}
+        fn add_references(_references: &mut References<'_>) {}
     }
 
     struct Bad2;
@@ -54,7 +54,7 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Bad")
         }
 
-        fn add_references(_references: &mut References) {}
+        fn add_references(_references: &mut References<'_>) {}
     }
 
     struct Dup;
@@ -68,7 +68,7 @@ fn duplicate_lexical_id_bad() {
             LexicalId::custom("dup", "Dup")
         }
 
-        fn add_references(references: &mut References) {
+        fn add_references(references: &mut References<'_>) {
             references.add::<Bad1>();
             references.add::<Bad2>();
         }
@@ -98,7 +98,7 @@ fn basic_enum_type_id() {
             LexicalId::custom("test", "Foo")
         }
 
-        fn add_references(_references: &mut References) {}
+        fn add_references(_references: &mut References<'_>) {}
     }
 
     let type_id = TypeId::compute::<Foo>();

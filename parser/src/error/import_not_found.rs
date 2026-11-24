@@ -11,7 +11,7 @@ pub(crate) struct ImportNotFound {
 }
 
 impl ImportNotFound {
-    pub(crate) fn validate(import_stmt: &ImportStmt, validate: &mut Validate) {
+    pub(crate) fn validate(import_stmt: &ImportStmt, validate: &mut Validate<'_>) {
         if validate
             .get_schema(import_stmt.schema_name().value())
             .is_some()

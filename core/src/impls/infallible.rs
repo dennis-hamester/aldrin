@@ -7,19 +7,19 @@ impl PrimaryTag for Infallible {
 }
 
 impl<T: Tag> Serialize<T> for Infallible {
-    fn serialize(self, _serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, _serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {}
     }
 }
 
 impl<T: Tag> Serialize<T> for &Infallible {
-    fn serialize(self, _serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, _serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match *self {}
     }
 }
 
 impl<T: Tag> Deserialize<T> for Infallible {
-    fn deserialize(_deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(_deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         Err(DeserializeError::UnexpectedValue)
     }
 }

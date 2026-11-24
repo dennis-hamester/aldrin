@@ -228,7 +228,7 @@ impl<'a, 'b, K: KeyTag> Map1Deserializer<'a, 'b, K> {
 }
 
 impl<K> fmt::Debug for Map1Deserializer<'_, '_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("MapDeserializer");
 
         f.field("buf", &self.buf);
@@ -366,7 +366,7 @@ impl<'a, 'b, K: KeyTag> Map2Deserializer<'a, 'b, K> {
 }
 
 impl<K> fmt::Debug for Map2Deserializer<'_, '_, K> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("MapDeserializer");
 
         f.field("buf", &self.buf);

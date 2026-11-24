@@ -13,7 +13,7 @@ pub(crate) struct InvalidEscapeCode {
 }
 
 impl InvalidEscapeCode {
-    pub(crate) fn validate(def: &ConstDef, validate: &mut Validate) {
+    pub(crate) fn validate(def: &ConstDef, validate: &mut Validate<'_>) {
         let ConstValue::String(val) = def.value() else {
             return;
         };

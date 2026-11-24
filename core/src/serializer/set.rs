@@ -56,7 +56,7 @@ impl<'a, K: KeyTag> Set1Serializer<'a, K> {
 }
 
 impl<T> fmt::Debug for Set1Serializer<'_, T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Set1Serializer");
 
         f.field("buf", &self.buf);
@@ -97,7 +97,7 @@ impl<'a, K: KeyTag> Set2Serializer<'a, K> {
 }
 
 impl<T> fmt::Debug for Set2Serializer<'_, T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut f = f.debug_struct("Set2Serializer");
 
         f.field("buf", &self.buf);

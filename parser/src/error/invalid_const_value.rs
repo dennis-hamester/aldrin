@@ -11,7 +11,7 @@ pub(crate) struct InvalidConstValue {
 }
 
 impl InvalidConstValue {
-    pub(crate) fn validate(const_value: &ConstValue, validate: &mut Validate) {
+    pub(crate) fn validate(const_value: &ConstValue, validate: &mut Validate<'_>) {
         let is_err = match const_value {
             ConstValue::U8(v) => v.value().parse::<u8>().is_err(),
             ConstValue::I8(v) => v.value().parse::<i8>().is_err(),

@@ -14,7 +14,7 @@ pub(crate) struct DuplicateEventId {
 }
 
 impl DuplicateEventId {
-    pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate) {
+    pub(crate) fn validate(service: &ServiceDef, validate: &mut Validate<'_>) {
         let events = service.items().iter().filter_map(ServiceItem::as_event);
 
         let mut max_id = events

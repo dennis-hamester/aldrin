@@ -149,13 +149,13 @@ impl PrimaryTag for Introspection {
 }
 
 impl Serialize<Self> for Introspection {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(&self)
     }
 }
 
 impl Serialize<Introspection> for &Introspection {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct1(4)?;
 
         serializer.serialize::<tags::U32>(IntrospectionField::Version, VERSION)?;
@@ -170,7 +170,7 @@ impl Serialize<Introspection> for &Introspection {
 }
 
 impl Deserialize<Self> for Introspection {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut type_id = None;
@@ -246,14 +246,14 @@ impl Extend<DynIntrospectable> for References<'_> {
 pub trait Introspectable {
     fn layout() -> ir::LayoutIr;
     fn lexical_id() -> LexicalId;
-    fn add_references(references: &mut References);
+    fn add_references(references: &mut References<'_>);
 }
 
 #[derive(Debug, Copy, Clone)]
 pub struct DynIntrospectable {
     layout: fn() -> ir::LayoutIr,
     lexical_id: fn() -> LexicalId,
-    add_references: fn(&mut References),
+    add_references: fn(&mut References<'_>),
 }
 
 impl DynIntrospectable {
@@ -273,7 +273,7 @@ impl DynIntrospectable {
         (self.lexical_id)()
     }
 
-    pub fn add_references(self, references: &mut References) {
+    pub fn add_references(self, references: &mut References<'_>) {
         (self.add_references)(references);
     }
 }

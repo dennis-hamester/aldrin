@@ -61,7 +61,7 @@ impl UuidRef {
 }
 
 impl fmt::Display for UuidRef {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Const(uuid) => uuid.fmt(f),
             Self::Get(id) => f.write_fmt(format_args!("get:{id}")),

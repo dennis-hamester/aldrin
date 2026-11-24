@@ -65,7 +65,7 @@ pub(crate) fn run(args: FmtArgs) -> Result<bool> {
     Ok(res)
 }
 
-fn fmt(formatter: Formatter, parser: &Parser, is_stdin: bool) -> Result<()> {
+fn fmt(formatter: Formatter<'_>, parser: &Parser, is_stdin: bool) -> Result<()> {
     if is_stdin {
         formatter.to_writer(io::stdout())?;
     } else {
@@ -83,7 +83,7 @@ fn fmt(formatter: Formatter, parser: &Parser, is_stdin: bool) -> Result<()> {
     Ok(())
 }
 
-fn check(formatter: Formatter, parser: &Parser, parsers: &[Parser], first: &mut bool) -> bool {
+fn check(formatter: Formatter<'_>, parser: &Parser, parsers: &[Parser], first: &mut bool) -> bool {
     let original = parser.main_schema().source().unwrap();
     let formatted = formatter.to_string();
 
@@ -101,7 +101,7 @@ fn check(formatter: Formatter, parser: &Parser, parsers: &[Parser], first: &mut 
     }
 }
 
-fn print_hunk(hunk: &Hunk<str>) {
+fn print_hunk(hunk: &Hunk<'_, str>) {
     eprintln!("@@ -{} +{} @@", hunk.old_range(), hunk.new_range());
 
     for line in hunk.lines() {
@@ -109,7 +109,7 @@ fn print_hunk(hunk: &Hunk<str>) {
     }
 }
 
-fn print_hunk_line(line: &Line<str>) {
+fn print_hunk_line(line: &Line<'_, str>) {
     const CONTEXT: Style = Style::new();
     const DELETE: Style = Style::new().fg_color(Some(Color::Ansi(AnsiColor::Red)));
     const INSERT: Style = Style::new().fg_color(Some(Color::Ansi(AnsiColor::Green)));

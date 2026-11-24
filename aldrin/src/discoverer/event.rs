@@ -97,7 +97,7 @@ impl<Key> From<DiscovererIterEntry<'_, Key>> for DiscovererEvent<Key>
 where
     Key: Copy + Eq + Hash,
 {
-    fn from(entry: DiscovererIterEntry<Key>) -> Self {
+    fn from(entry: DiscovererIterEntry<'_, Key>) -> Self {
         Self::new(entry.key(), DiscovererEventKind::Created, entry.object_id())
     }
 }

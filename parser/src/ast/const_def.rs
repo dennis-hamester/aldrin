@@ -17,7 +17,7 @@ pub struct ConstDef {
 }
 
 impl ConstDef {
-    pub(crate) fn parse(pair: Pair<Rule>) -> Self {
+    pub(crate) fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::const_def);
 
         let span = Span::from_pair(&pair);
@@ -44,7 +44,7 @@ impl ConstDef {
         }
     }
 
-    pub(crate) fn validate(&self, validate: &mut Validate) {
+    pub(crate) fn validate(&self, validate: &mut Validate<'_>) {
         BrokenDocLink::validate(&self.doc, validate);
         InvalidEscapeCode::validate(self, validate);
         NonShoutySnakeCaseConst::validate(self, validate);
@@ -93,7 +93,7 @@ pub enum ConstValue {
 }
 
 impl ConstValue {
-    fn parse(pair: Pair<Rule>) -> Self {
+    fn parse(pair: Pair<'_, Rule>) -> Self {
         assert_eq!(pair.as_rule(), Rule::const_value);
         let mut pairs = pair.into_inner();
         let pair = pairs.next().unwrap();
@@ -117,7 +117,7 @@ impl ConstValue {
         }
     }
 
-    fn validate(&self, validate: &mut Validate) {
+    fn validate(&self, validate: &mut Validate<'_>) {
         InvalidConstValue::validate(self, validate);
     }
 }

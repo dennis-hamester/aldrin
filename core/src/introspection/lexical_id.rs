@@ -156,37 +156,37 @@ impl PrimaryTag for LexicalId {
 }
 
 impl Serialize<Self> for LexicalId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_uuid(self.0)
     }
 }
 
 impl Serialize<LexicalId> for &LexicalId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<LexicalId>(*self)
     }
 }
 
 impl Deserialize<Self> for LexicalId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize_uuid().map(Self)
     }
 }
 
 impl Serialize<tags::Uuid> for LexicalId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<Self>(self)
     }
 }
 
 impl Serialize<tags::Uuid> for &LexicalId {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize::<tags::Uuid>(*self)
     }
 }
 
 impl Deserialize<tags::Uuid> for LexicalId {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         deserializer.deserialize::<Self, _>()
     }
 }
@@ -236,7 +236,7 @@ impl From<LexicalId> for Uuid {
 }
 
 impl fmt::Display for LexicalId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }

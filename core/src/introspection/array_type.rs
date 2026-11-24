@@ -51,7 +51,7 @@ impl PrimaryTag for ArrayType {
 }
 
 impl Serialize<Self> for ArrayType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         let mut serializer = serializer.serialize_struct2()?;
 
         serializer.serialize::<TypeId>(ArrayTypeField::ElemType, self.elem_type)?;
@@ -62,13 +62,13 @@ impl Serialize<Self> for ArrayType {
 }
 
 impl Serialize<ArrayType> for &ArrayType {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize(*self)
     }
 }
 
 impl Deserialize<Self> for ArrayType {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let mut deserializer = deserializer.deserialize_struct()?;
 
         let mut elem_type = None;

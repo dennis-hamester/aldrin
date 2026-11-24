@@ -24,7 +24,7 @@ where
     E: Tag,
     F: Serialize<E>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Ok(value) => serializer.serialize_enum(ResultVariant::Ok, value),
             Err(value) => serializer.serialize_enum(ResultVariant::Err, value),
@@ -39,7 +39,7 @@ where
     E: Tag,
     &'a F: Serialize<E>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             Ok(value) => serializer.serialize_enum(ResultVariant::Ok, value),
             Err(value) => serializer.serialize_enum(ResultVariant::Err, value),
@@ -54,7 +54,7 @@ where
     E: Tag,
     F: Deserialize<E>,
 {
-    fn deserialize(deserializer: Deserializer) -> Result<Self, DeserializeError> {
+    fn deserialize(deserializer: Deserializer<'_, '_>) -> Result<Self, DeserializeError> {
         let deserializer = deserializer.deserialize_enum()?;
 
         match deserializer.try_id()? {
@@ -74,7 +74,7 @@ impl<T: Introspectable, E: Introspectable> Introspectable for Result<T, E> {
         LexicalId::result(T::lexical_id(), E::lexical_id())
     }
 
-    fn add_references(references: &mut References) {
+    fn add_references(references: &mut References<'_>) {
         references.add::<T>();
         references.add::<E>();
     }

@@ -4,6 +4,7 @@ use aldrin_test::aldrin::{Discoverer, DiscovererEvent, DiscovererEventKind, Obje
 use aldrin_test::tokio::TestBroker;
 use std::fmt::Debug;
 use std::hash::Hash;
+use uuid::uuid;
 
 #[track_caller]
 fn test_created<Key>(
@@ -653,12 +654,15 @@ async fn finish_on_shutdown() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "\
+assertion `left == right` failed
+  left: ObjectUuid(00000000-0000-0000-0000-000000000000)
+ right: ObjectUuid(7c85cd59-e958-435a-821b-6b3943343e94)")]
 async fn query_invalid_object_uuid1() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
-    let obj_uuid = ObjectUuid::new_v4();
+    let obj_uuid = ObjectUuid(uuid!("7c85cd59-e958-435a-821b-6b3943343e94"));
     let svc_uuid = ServiceUuid::new_v4();
 
     let mut discoverer = client
@@ -681,12 +685,15 @@ async fn query_invalid_object_uuid1() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "\
+assertion `left == right` failed
+  left: ObjectUuid(00000000-0000-0000-0000-000000000000)
+ right: ObjectUuid(fe1819fe-b645-419e-894f-b278c2df7f96)")]
 async fn query_invalid_object_uuid2() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
-    let obj_uuid = ObjectUuid::new_v4();
+    let obj_uuid = ObjectUuid(uuid!("fe1819fe-b645-419e-894f-b278c2df7f96"));
     let svc_uuid = ServiceUuid::new_v4();
 
     let mut discoverer = client
@@ -708,12 +715,15 @@ async fn query_invalid_object_uuid2() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "\
+assertion `left == right` failed
+  left: ObjectUuid(00000000-0000-0000-0000-000000000000)
+ right: ObjectUuid(4bc6d708-e131-49ad-9f52-1b80c82754db)")]
 async fn query_entry_invalid_object_uuid1() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
-    let obj_uuid = ObjectUuid::new_v4();
+    let obj_uuid = ObjectUuid(uuid!("4bc6d708-e131-49ad-9f52-1b80c82754db"));
     let svc_uuid = ServiceUuid::new_v4();
 
     let mut discoverer = client
@@ -737,12 +747,15 @@ async fn query_entry_invalid_object_uuid1() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "\
+assertion `left == right` failed
+  left: ObjectUuid(00000000-0000-0000-0000-000000000000)
+ right: ObjectUuid(5f291709-12e2-4eb0-9a19-5bba6f9c0f8c)")]
 async fn query_entry_invalid_object_uuid2() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
 
-    let obj_uuid = ObjectUuid::new_v4();
+    let obj_uuid = ObjectUuid(uuid!("5f291709-12e2-4eb0-9a19-5bba6f9c0f8c"));
     let svc_uuid = ServiceUuid::new_v4();
 
     let mut discoverer = client
@@ -766,7 +779,7 @@ async fn query_entry_invalid_object_uuid2() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "valid key")]
 async fn query_invalid_entry() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;
@@ -783,7 +796,7 @@ async fn query_invalid_entry() {
 }
 
 #[tokio::test]
-#[should_panic]
+#[should_panic(expected = "valid key")]
 async fn query_invalid_entry_iter() {
     let mut broker = TestBroker::new();
     let client = broker.add_client().await;

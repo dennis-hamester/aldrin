@@ -48,7 +48,7 @@ impl PendingReply {
 impl Future for PendingReply {
     type Output = Result<Reply, Error>;
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         match Pin::new(&mut self.recv).poll(cx) {
             Poll::Ready(Ok(Ok((CallFunctionResult::Ok(t), timestamp)))) => {
                 Poll::Ready(Ok(Reply::new(self.id, timestamp, Ok(t))))

@@ -18,7 +18,7 @@ where
     U: IntoIterator,
     U::Item: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(self.0)
     }
 }
@@ -29,7 +29,7 @@ where
     &'a U: IntoIterator,
     <&'a U as IntoIterator>::Item: Serialize<T>,
 {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         serializer.serialize_vec2_iter(&self.0)
     }
 }

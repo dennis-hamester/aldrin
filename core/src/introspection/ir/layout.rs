@@ -122,7 +122,7 @@ impl PrimaryTag for LayoutIr {
 }
 
 impl Serialize<LayoutIr> for &LayoutIr {
-    fn serialize(self, serializer: Serializer) -> Result<(), SerializeError> {
+    fn serialize(self, serializer: Serializer<'_>) -> Result<(), SerializeError> {
         match self {
             LayoutIr::BuiltIn(ty) => {
                 serializer.serialize_enum::<BuiltInTypeIr>(LayoutVariant::BuiltIn, ty)
