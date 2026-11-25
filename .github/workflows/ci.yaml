@@ -4,6 +4,14 @@ on:
   push:
     branches-ignore:
     - 'wip/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_INCREMENTAL: 0
@@ -11,106 +19,152 @@ env:
 
 jobs:
 
-  ci-aldrin:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin
+  packages:
+    name: List workspace packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      packages: ${{ steps.list.outputs.packages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: List packages
+        id: list
+        run: echo "packages=$(cargo metadata --no-deps --format-version 1 | jq -c '[.packages[].name]')" >> "$GITHUB_OUTPUT"
 
-  ci-aldrin-broker:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-broker
+  clippy:
+    name: Clippy (${{ matrix.package }})
+    needs: packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: clippy-${{ matrix.package }}
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: Clippy (feature powerset)
+        run: cargo hack clippy --locked -p ${{ matrix.package }} --feature-powerset --depth 2 --all-targets
+      - name: Clippy (all features)
+        run: cargo hack clippy --locked -p ${{ matrix.package }} --all-features --all-targets
 
-  ci-aldrin-codegen:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-codegen
+  check-msrv:
+    name: Check (MSRV)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Rust 1.94.1
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      # No --locked below: it must not be combined with --no-dev-deps.
+      - name: Check (workspace, without dev-dependencies, feature powerset)
+        run: cargo hack check --workspace --feature-powerset --depth 2 --no-dev-deps
+      - name: Check (workspace, without dev-dependencies, all features)
+        run: cargo hack check --workspace --all-features --no-dev-deps
 
-  ci-aldrin-conformance-tester:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-conformance-tester
+  minimal-versions:
+    name: Check minimal versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: Resolve direct dependencies to minimal versions
+        run: cargo +nightly update -Z direct-minimal-versions
+      # No --locked below: the lock file was just rewritten by the previous step, and it must not be
+      # combined with --no-dev-deps anyway.
+      - name: Check (workspace, without dev-dependencies, feature powerset)
+        run: cargo hack check --workspace --feature-powerset --depth 2 --no-dev-deps
+      - name: Check (workspace, without dev-dependencies, all features)
+        run: cargo hack check --workspace --all-features --no-dev-deps
 
-  ci-aldrin-core:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-core
-
-  ci-aldrin-gen:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-gen
-
-  ci-aldrin-macros:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-macros
-
-  ci-aldrin-parser:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-parser
-
-  ci-aldrin-test:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: aldrin-test
-
-  ci-conformance-test-broker:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: conformance-test-broker
-
-  ci-example-bookmarks:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-bookmarks
-
-  ci-example-broker:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-broker
-
-  ci-example-downloader:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-downloader
-
-  ci-example-echo:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-echo
-
-  ci-example-introspect:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-introspect
-
-  ci-example-media-player:
-    uses: ./.github/workflows/check-component.yaml
-    with:
-      component: example-media-player
+  test:
+    name: Test (${{ matrix.package }}, ${{ matrix.rust }})
+    needs: packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.packages.outputs.packages) }}
+        rust:
+          - stable
+          - 1.94.1
+        include:
+          - rust: stable
+            depth: 2
+          - rust: 1.94.1
+            depth: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Rust ${{ matrix.rust }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: test-${{ matrix.rust }}-${{ matrix.package }}
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: Test (feature powerset)
+        run: cargo hack test --locked -p ${{ matrix.package }} --feature-powerset --depth ${{ matrix.depth }}
+      - name: Test (all features)
+        run: cargo hack test --locked -p ${{ matrix.package }} --all-features
 
   doc:
     name: Check docs
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTDOCFLAGS: -D warnings
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-      - name: Cache
+      - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Cargo doc (no default features)
-        run: cargo doc --locked --no-default-features --no-deps
+        run: cargo doc --locked --workspace --no-deps --no-default-features
       - name: Cargo doc (all features)
-        run: cargo doc --locked --all-features --no-deps
+        run: cargo doc --locked --workspace --no-deps --all-features
 
   style:
-    name: Code style
+    name: Code formatting
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -118,34 +172,52 @@ jobs:
       - name: Cargo fmt
         run: cargo fmt -- --check
 
+  style-toml:
+    name: TOML formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Tombi
+        uses: tombi-toml/setup-tombi@v1
+        with:
+          version: 1.11.3
+      - name: Tombi format
+        run: tombi format --check
+      - name: Tombi lint
+        run: tombi lint
+
   style-aldrin:
     name: Schema formatting
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        schema:
-          - examples/bookmarks/src/bookmarks_v1.aldrin
-          - examples/bookmarks/src/bookmarks_v2.aldrin
-          - examples/downloader/src/downloader.aldrin
-          - examples/echo/src/echo.aldrin
-          - examples/media-player/src/media_player.aldrin
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
       - name: Build aldrin-gen
-        run: cargo build -p aldrin-gen
+        run: cargo build --locked -p aldrin-gen
+      # Only the examples are checked. Schemas in test directories are intentionally unformatted or invalid.
       - name: Check schema formatting
-        run: cargo run -p aldrin-gen -- fmt --check ${{ matrix.schema }}
+        run: |
+          status=0
+          while IFS= read -r -d '' schema; do
+            echo "==> $schema"
+            target/debug/aldrin-gen fmt --check "$schema" || status=1
+          done < <(find examples -name '*.aldrin' -print0 | sort -z)
+          exit $status
 
   conformance:
     name: Protocol conformance tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-      - name: Cache
+      - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Build aldrin-conformance-tester
         run: cargo build --locked -p aldrin-conformance-tester
@@ -157,40 +229,71 @@ jobs:
   cargo-deny:
     name: Check cargo-deny
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.checks == 'advisories' }}
-    strategy:
-      matrix:
-        checks:
-          - advisories
-          - bans licenses sources
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
+      # Advisories are checked on a schedule in audit.yaml.
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
-          command: check ${{ matrix.checks }}
+          command: check bans licenses sources
 
-  miri-aldrin:
-    name: Test aldrin under Miri
+  machete:
+    name: Check unused dependencies
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
+      - name: Install cargo-machete
+        uses: taiki-e/install-action@cargo-machete
+      - name: Cargo machete
+        run: cargo machete --skip-patterns fuzz
+
+  miri:
+    name: Test ${{ matrix.package }} under Miri
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - aldrin
+          - aldrin-core
+    steps:
+      - uses: actions/checkout@v7
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
           components: miri, rust-src
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: miri-${{ matrix.package }}
       - name: Run tests under miri
-        run: cargo miri test --all-features -p aldrin
+        run: cargo miri test --locked --all-features -p ${{ matrix.package }}
 
-  miri-aldrin-core:
-    name: Test aldrin-core under Miri
+  fuzz:
+    name: Check fuzz targets (${{ matrix.crate }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - broker
+          - core
+          - parser
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          components: miri, rust-src
-      - name: Run tests under miri
-        run: cargo miri test --all-features -p aldrin-core
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ matrix.crate }}/fuzz
+      - name: Check fuzz targets
+        working-directory: ${{ matrix.crate }}/fuzz
+        # No --locked: the fuzz crates' lock files are gitignored.
+        run: cargo check --all-targets --all-features
