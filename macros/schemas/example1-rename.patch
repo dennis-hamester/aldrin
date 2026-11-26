@@ -14,6 +14,6 @@
  
 -impl r#MyStruct {
 +impl r#MyStructRenamed {
+     #[must_use]
      pub fn new() -> Self {
          <Self as ::std::default::Default>::default()
-     }

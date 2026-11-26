@@ -145,8 +145,13 @@ impl RustGenerator<'_> {
 
             codeln!(self, "pub fn {name}(client: &{krate}::Handle) -> {RESULT}<(), {krate}::Error> {{");
 
+            let mut any_registered = false;
             for def in self.schema.definitions() {
-                self.register_introspection(def);
+                any_registered |= self.register_introspection(def);
+            }
+
+            if !any_registered {
+                codeln!(self, "    let _ = client;");
             }
 
             codeln!(self, "    {OK}(())");
@@ -303,6 +308,7 @@ impl RustGenerator<'_> {
 
         if !has_required_fields {
             codeln!(self, "impl {ident} {{");
+            codeln!(self, "    #[must_use]");
             codeln!(self, "    pub fn new() -> Self {{");
             codeln!(self, "        <Self as {DEFAULT}>::default()");
             codeln!(self, "    }}");
@@ -804,23 +810,27 @@ impl RustGenerator<'_> {
         codeln!(self);
     }
 
-    fn register_introspection(&mut self, def: &ast::Definition) {
+    fn register_introspection(&mut self, def: &ast::Definition) -> bool {
         match def {
             def @ (ast::Definition::Struct(_)
             | ast::Definition::Enum(_)
             | ast::Definition::Newtype(_)) => {
                 let ident = format!("r#{}", def.name().value());
                 codeln!(self, "    client.register_introspection::<{ident}>()?;");
+                true
             }
 
             ast::Definition::Service(s) => {
                 if self.options.client || self.options.server {
                     let ident = format!("r#{}", s.name().value());
                     codeln!(self, "    client.register_introspection::<{ident}Introspection>()?;");
+                    true
+                } else {
+                    false
                 }
             }
 
-            ast::Definition::Const(_) => {}
+            ast::Definition::Const(_) => false,
         }
     }
 
