@@ -1,17 +1,26 @@
 use crate::{Broker, BrokerHandle};
 use aldrin::Client;
 use aldrin::low_level::{Proxy, ServiceInfo};
+#[cfg(feature = "introspection")]
+use aldrin_core::TypeId;
 use aldrin_core::channel::{self, Disconnected, Unbounded};
 use aldrin_core::message::{
-    CallFunction, CallFunctionReply, CallFunctionResult, ChannelEndClaimed, ChannelEndClosed,
-    ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult, CloseChannelEnd,
-    CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData, ConnectResult,
-    CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply, CreateObjectResult,
-    CreateService, CreateServiceReply, CreateServiceResult, Message, SendItem, Sync, SyncReply,
+    CallFunction, CallFunction2, CallFunctionReply, CallFunctionResult, ChannelEndClaimed,
+    ChannelEndClosed, ClaimChannelEnd, ClaimChannelEndReply, ClaimChannelEndResult,
+    CloseChannelEnd, CloseChannelEndReply, CloseChannelEndResult, Connect2, ConnectData,
+    ConnectResult, CreateChannel, CreateChannelReply, CreateObject, CreateObjectReply,
+    CreateObjectResult, CreateService, CreateServiceReply, CreateServiceResult, EmitEvent, Message,
+    MessageOps, SendItem, ServiceDestroyed, SubscribeEvent, SubscribeEventReply,
+    SubscribeEventResult, Sync, SyncReply,
+};
+#[cfg(feature = "introspection")]
+use aldrin_core::message::{
+    QueryIntrospection, QueryIntrospectionReply, QueryIntrospectionResult, RegisterIntrospection,
 };
 use aldrin_core::transport::AsyncTransportExt;
 use aldrin_core::{
-    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue, ServiceUuid,
+    ChannelEnd, ChannelEndWithCapacity, ObjectUuid, ProtocolVersion, SerializedValue,
+    ServiceCookie, ServiceUuid,
 };
 use aldrin_test::tokio::TestBroker;
 use futures_util::future::{self, Either};
@@ -392,13 +401,15 @@ async fn duplicate_call_serial() {
 }
 
 async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
-    const VERSION: ProtocolVersion = ProtocolVersion::V1_16;
+    connect_client_version(broker, ProtocolVersion::V1_16).await
+}
 
+async fn connect_client_version(broker: &mut BrokerHandle, version: ProtocolVersion) -> Unbounded {
     let (mut t1, t2) = channel::unbounded();
 
     t1.send(Connect2 {
-        major_version: VERSION.major(),
-        minor_version: VERSION.minor(),
+        major_version: version.major(),
+        minor_version: version.minor(),
         value: SerializedValue::serialize(ConnectData::new()).unwrap(),
     })
     .await
@@ -410,10 +421,66 @@ async fn connect_client(broker: &mut BrokerHandle) -> Unbounded {
         panic!("expected connect-reply2");
     };
 
-    assert_eq!(reply.result, ConnectResult::Ok(VERSION.minor()));
+    assert_eq!(reply.result, ConnectResult::Ok(version.minor()));
 
     tokio::spawn(conn.run());
     t1
+}
+
+fn malformed_value() -> SerializedValue {
+    let mut buf = CallFunction {
+        serial: 0,
+        service_cookie: ServiceCookie::new_v4(),
+        function: 0,
+        value: SerializedValue::empty(),
+    }
+    .serialize_message()
+    .unwrap();
+    buf[9] = 255;
+
+    let Message::CallFunction(msg) = Message::deserialize_message(buf).unwrap() else {
+        unreachable!();
+    };
+
+    msg.value
+}
+
+async fn create_object_and_service(client: &mut Unbounded) -> ServiceCookie {
+    client
+        .send(Message::CreateObject(CreateObject {
+            serial: 0,
+            uuid: ObjectUuid::new_v4(),
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateObjectReply(CreateObjectReply {
+        result: CreateObjectResult::Ok(object_cookie),
+        ..
+    }) = client.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    client
+        .send(Message::CreateService(CreateService {
+            serial: 0,
+            object_cookie,
+            uuid: ServiceUuid::new_v4(),
+            version: 0,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateServiceReply(CreateServiceReply {
+        result: CreateServiceResult::Ok(service_cookie),
+        ..
+    }) = client.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    service_cookie
 }
 
 #[tokio::test]
@@ -438,4 +505,328 @@ async fn destroy_service_after_abort() {
     client1.join().await;
     client2.join().await;
     broker.join().await;
+}
+
+#[tokio::test]
+async fn malformed_call_function_value_does_not_disconnect_callee() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut callee = connect_client_version(&mut handle, ProtocolVersion::V1_19).await;
+    let mut caller = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+    let mut caller2 = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+
+    let service_cookie = create_object_and_service(&mut callee).await;
+
+    caller
+        .send(Message::CallFunction(CallFunction {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            value: malformed_value(),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(caller.receive().await, Err(Disconnected));
+
+    caller2
+        .send(Message::CallFunction2(CallFunction2 {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            version: None,
+            value: malformed_value(),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(caller2.receive().await, Err(Disconnected));
+
+    callee
+        .send(Message::Sync(Sync { serial: 1 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        callee.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 1 }))
+    );
+}
+
+#[tokio::test]
+async fn malformed_call_function_reply_value_does_not_disconnect_caller() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut callee = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+    let mut caller = connect_client_version(&mut handle, ProtocolVersion::V1_19).await;
+
+    let service_cookie = create_object_and_service(&mut callee).await;
+
+    caller
+        .send(Message::CallFunction(CallFunction {
+            serial: 0,
+            service_cookie,
+            function: 0,
+            value: SerializedValue::empty(),
+        }))
+        .await
+        .unwrap();
+
+    let Message::CallFunction2(CallFunction2 { serial, .. }) = callee.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    callee
+        .send(Message::CallFunctionReply(CallFunctionReply {
+            serial,
+            result: CallFunctionResult::Ok(malformed_value()),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(callee.receive().await, Err(Disconnected));
+
+    assert_eq!(
+        caller.receive().await,
+        Ok(Message::CallFunctionReply(CallFunctionReply {
+            serial: 0,
+            result: CallFunctionResult::InvalidService,
+        }))
+    );
+
+    caller
+        .send(Message::Sync(Sync { serial: 1 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        caller.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 1 }))
+    );
+}
+
+#[tokio::test]
+async fn malformed_emit_event_value_does_not_disconnect_subscriber() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut emitter = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+    let mut subscriber = connect_client_version(&mut handle, ProtocolVersion::V1_19).await;
+
+    let service_cookie = create_object_and_service(&mut emitter).await;
+
+    subscriber
+        .send(Message::SubscribeEvent(SubscribeEvent {
+            serial: Some(0),
+            service_cookie,
+            event: 0,
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        subscriber.receive().await,
+        Ok(Message::SubscribeEventReply(SubscribeEventReply {
+            serial: 0,
+            result: SubscribeEventResult::Ok,
+        }))
+    );
+
+    let Message::SubscribeEvent(_) = emitter.receive().await.unwrap() else {
+        panic!();
+    };
+
+    emitter
+        .send(Message::EmitEvent(EmitEvent {
+            service_cookie,
+            event: 0,
+            value: malformed_value(),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(emitter.receive().await, Err(Disconnected));
+
+    assert_eq!(
+        subscriber.receive().await,
+        Ok(Message::ServiceDestroyed(ServiceDestroyed {
+            service_cookie,
+        }))
+    );
+
+    subscriber
+        .send(Message::Sync(Sync { serial: 1 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        subscriber.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 1 }))
+    );
+}
+
+#[tokio::test]
+async fn malformed_send_item_value_does_not_disconnect_receiver() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut sender = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+    let mut receiver = connect_client_version(&mut handle, ProtocolVersion::V1_19).await;
+
+    sender
+        .send(Message::CreateChannel(CreateChannel {
+            serial: 0,
+            end: ChannelEndWithCapacity::Sender,
+        }))
+        .await
+        .unwrap();
+
+    let Message::CreateChannelReply(CreateChannelReply { serial: 0, cookie }) =
+        sender.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    receiver
+        .send(Message::ClaimChannelEnd(ClaimChannelEnd {
+            serial: 0,
+            cookie,
+            end: ChannelEndWithCapacity::Receiver(1),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        receiver.receive().await,
+        Ok(Message::ClaimChannelEndReply(ClaimChannelEndReply {
+            serial: 0,
+            result: ClaimChannelEndResult::ReceiverClaimed,
+        }))
+    );
+
+    assert_eq!(
+        sender.receive().await,
+        Ok(Message::ChannelEndClaimed(ChannelEndClaimed {
+            cookie,
+            end: ChannelEndWithCapacity::Receiver(1),
+        }))
+    );
+
+    sender
+        .send(Message::SendItem(SendItem {
+            cookie,
+            value: malformed_value(),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(sender.receive().await, Err(Disconnected));
+
+    assert_eq!(
+        receiver.receive().await,
+        Ok(Message::ChannelEndClosed(ChannelEndClosed {
+            cookie,
+            end: ChannelEnd::Sender,
+        }))
+    );
+
+    receiver
+        .send(Message::Sync(Sync { serial: 1 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        receiver.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 1 }))
+    );
+}
+
+#[cfg(feature = "introspection")]
+#[tokio::test]
+async fn malformed_query_introspection_reply_does_not_disconnect_querier() {
+    let broker = Broker::new();
+    let mut handle = broker.handle().clone();
+    tokio::spawn(broker.run());
+
+    let mut provider = connect_client_version(&mut handle, ProtocolVersion::V1_20).await;
+    let mut querier = connect_client_version(&mut handle, ProtocolVersion::V1_19).await;
+
+    let type_id = TypeId::new_v4();
+
+    provider
+        .send(Message::RegisterIntrospection(RegisterIntrospection {
+            value: SerializedValue::serialize(std::collections::HashSet::from([type_id])).unwrap(),
+        }))
+        .await
+        .unwrap();
+
+    provider
+        .send(Message::Sync(Sync { serial: 0 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        provider.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 0 }))
+    );
+
+    querier
+        .send(Message::QueryIntrospection(QueryIntrospection {
+            serial: 0,
+            type_id,
+        }))
+        .await
+        .unwrap();
+
+    let Message::QueryIntrospection(QueryIntrospection { serial, .. }) =
+        provider.receive().await.unwrap()
+    else {
+        panic!();
+    };
+
+    provider
+        .send(Message::QueryIntrospectionReply(QueryIntrospectionReply {
+            serial,
+            result: QueryIntrospectionResult::Ok(malformed_value()),
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(provider.receive().await, Err(Disconnected));
+
+    assert_eq!(
+        querier.receive().await,
+        Ok(Message::QueryIntrospectionReply(QueryIntrospectionReply {
+            serial: 0,
+            result: QueryIntrospectionResult::Unavailable,
+        }))
+    );
+
+    // Ensure the introspection cache was not poisoned.
+    querier
+        .send(Message::QueryIntrospection(QueryIntrospection {
+            serial: 1,
+            type_id,
+        }))
+        .await
+        .unwrap();
+
+    assert_eq!(
+        querier.receive().await,
+        Ok(Message::QueryIntrospectionReply(QueryIntrospectionReply {
+            serial: 1,
+            result: QueryIntrospectionResult::Unavailable,
+        }))
+    );
+
+    querier
+        .send(Message::Sync(Sync { serial: 2 }))
+        .await
+        .unwrap();
+    assert_eq!(
+        querier.receive().await,
+        Ok(Message::SyncReply(SyncReply { serial: 2 }))
+    );
 }

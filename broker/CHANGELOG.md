@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Check protocol version compatibility in `Acceptor::new` before deserializing `ConnectData`.
+- Validate incoming `SerializedValue` payloads on receipt in `Connection::run` so malformed values
+  disconnect the offending sender instead of disconnecting receiving `1.14`–`1.19` clients or
+  poisoning the introspection cache.
 
 ## [0.15.0] - 2026-11-01
 

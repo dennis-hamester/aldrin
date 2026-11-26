@@ -6,7 +6,7 @@ mod select;
 use crate::conn_id::ConnectionId;
 use crate::versioned_message::VersionedMessage;
 use aldrin_core::ProtocolVersion;
-use aldrin_core::message::{Message, Shutdown};
+use aldrin_core::message::{Message, MessageOps, Shutdown};
 use aldrin_core::transport::{AsyncTransport, AsyncTransportExt, Buffered};
 use futures_channel::mpsc::{Sender, UnboundedReceiver};
 use futures_util::sink::SinkExt;
@@ -112,7 +112,16 @@ where
                     break self.client_shutdown(id).await;
                 }
 
-                Selected::Transport(Ok(msg)) => self.send_broker_msg(id.clone(), msg).await?,
+                Selected::Transport(Ok(msg)) => {
+                    if let Some(value) = msg.value()
+                        && let Err(e) = value.validate()
+                    {
+                        self.client_error(id).await?;
+                        break Err(ConnectionError::Deserialize(e));
+                    }
+
+                    self.send_broker_msg(id.clone(), msg).await?;
+                }
 
                 Selected::TransportFlushed(Ok(())) => self.flush_transport = false,
 
