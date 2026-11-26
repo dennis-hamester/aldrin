@@ -53,9 +53,13 @@ impl StructData<'_> {
         let krate = self.krate();
         let lifetimes = self.lifetimes();
         let field = &self.fields()[0];
-        let field_name = field.name();
-        let field_var = field.var();
         let field_ty = field.ty();
+        let map = if field.is_named() {
+            let var = field.var();
+            quote! { |#var| Self { #var } }
+        } else {
+            quote! { Self }
+        };
 
         quote! {
             #[automatically_derived]
@@ -67,7 +71,7 @@ impl StructData<'_> {
                 ) -> ::std::result::Result<Self, #krate::DeserializeError> {
                     #krate::DeserializeKey::<#krate::tags::AsKey<#field_ty>>::try_from_key(
                         key,
-                    ).map(|#field_var| Self { #field_name: #field_var })
+                    ).map(#map)
                 }
             }
         }

@@ -160,7 +160,7 @@ impl Body {
 
             pub fn poll_next_event(
                 &mut self,
-                cx: &mut ::std::task::Context,
+                cx: &mut ::std::task::Context<'_>,
             ) -> ::std::task::Poll<
                 ::std::option::Option<::std::result::Result<#event, #krate::Error>>,
             > {
@@ -195,7 +195,6 @@ impl Body {
             where
                 T: #handler + ?::std::marker::Sized,
             {
-                #[allow(unreachable_code)]
                 match event {
                     #dispatch_match_arms
                     #dispatch_fallback
@@ -211,7 +210,6 @@ impl Body {
             where
                 T: #local_handler + ?::std::marker::Sized,
             {
-                #[allow(unreachable_code)]
                 match event {
                     #dispatch_match_arms
                     #dispatch_fallback
@@ -457,7 +455,7 @@ impl Body {
 
             pub fn poll_next_call(
                 &mut self,
-                cx: &mut ::std::task::Context,
+                cx: &mut ::std::task::Context<'_>,
             ) -> ::std::task::Poll<
                 ::std::option::Option<::std::result::Result<#call, #krate::Error>>,
             > {
@@ -490,7 +488,6 @@ impl Body {
             where
                 T: #handler + ?::std::marker::Sized,
             {
-                #[allow(unreachable_code)]
                 match call {
                     #dispatch_match_arms
                     #dispatch_fallback
@@ -506,7 +503,6 @@ impl Body {
             where
                 T: #local_handler + ?::std::marker::Sized,
             {
-                #[allow(unreachable_code)]
                 match call {
                     #dispatch_match_arms
                     #dispatch_fallback
@@ -597,7 +593,10 @@ impl Body {
                 }
             }
 
-            pub fn poll_aborted(&mut self, cx: &mut ::std::task::Context) -> ::std::task::Poll<()> {
+            pub fn poll_aborted(
+                &mut self,
+                cx: &mut ::std::task::Context<'_>,
+            ) -> ::std::task::Poll<()> {
                 match *self {
                     #( #poll_aborted )*
                 }
@@ -700,7 +699,7 @@ impl Body {
                 #krate::core::introspection::LexicalId::service(#schema, #service)
             }
 
-            fn add_references(references: &mut #krate::core::introspection::References) {
+            fn add_references(references: &mut #krate::core::introspection::References<'_>) {
                 let types: [#krate::core::introspection::DynIntrospectable; #references_len] = [
                     #( #krate::core::introspection::DynIntrospectable::new::<#references>(), )*
                 ];

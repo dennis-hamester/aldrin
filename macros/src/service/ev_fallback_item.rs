@@ -41,7 +41,6 @@ impl EvFallbackItem {
 
         quote! {
             #doc
-            #[allow(dead_code)]
             #variant(#ty),
         }
     }

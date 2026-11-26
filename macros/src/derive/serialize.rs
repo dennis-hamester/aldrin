@@ -90,7 +90,7 @@ impl StructData<'_> {
             impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     let mut serializer = #serializer;
                     #(#fields)*
@@ -113,7 +113,7 @@ impl StructData<'_> {
             impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     #body
                 }
@@ -153,10 +153,10 @@ impl StructData<'_> {
 
         quote! {
             #[automatically_derived]
-            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+            impl<#(#lifetimes),*> #krate::Serialize<#ty> for &#ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     let mut serializer = #serializer;
                     #(#fields)*
@@ -176,10 +176,10 @@ impl StructData<'_> {
 
         quote! {
             #[automatically_derived]
-            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+            impl<#(#lifetimes),*> #krate::Serialize<#ty> for &#ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     #body
                 }
@@ -239,7 +239,7 @@ impl StructData<'_> {
             {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     let mut serializer = #serializer;
                     #(#fields)*
@@ -276,7 +276,7 @@ impl StructData<'_> {
             {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     #body
                 }
@@ -425,7 +425,7 @@ impl EnumData<'_> {
             impl<#(#lifetimes),*> #krate::Serialize<Self> for #ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     match self {
                         #(#variants)*
@@ -449,10 +449,10 @@ impl EnumData<'_> {
 
         quote! {
             #[automatically_derived]
-            impl<'_self, #(#lifetimes),*> #krate::Serialize<#ty> for &'_self #ty {
+            impl<#(#lifetimes),*> #krate::Serialize<#ty> for &#ty {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     match *self {
                         #(#variants)*
@@ -496,7 +496,7 @@ impl EnumData<'_> {
             {
                 fn serialize(
                     self,
-                    serializer: #krate::Serializer,
+                    serializer: #krate::Serializer<'_>,
                 ) -> ::std::result::Result<(), #krate::SerializeError> {
                     match self {
                         #(#variants)*

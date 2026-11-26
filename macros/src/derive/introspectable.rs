@@ -75,7 +75,7 @@ fn gen_introspectable(input: DeriveInput, options: &Options) -> Result<TokenStre
                 #krate::introspection::LexicalId::custom(#schema, #name)
             }
 
-            fn add_references(references: &mut #krate::introspection::References) {
+            fn add_references(references: &mut #krate::introspection::References<'_>) {
                 #add_references
             }
         }
@@ -169,7 +169,7 @@ fn gen_regular_struct(
             .into()
     };
 
-    let add_references = if fields.is_empty() {
+    let add_references = if references.is_empty() {
         TokenStream::new()
     } else {
         let len = references.len();

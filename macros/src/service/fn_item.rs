@@ -202,7 +202,7 @@ impl FnItem {
 
         quote! {
             #id => match call.deserialize_and_cast() {
-                ::std::result::Result::Ok((call)) => {
+                ::std::result::Result::Ok(call) => {
                     ::std::task::Poll::Ready(
                         ::std::option::Option::Some(
                             ::std::result::Result::Ok(#call::#variant(call)),
@@ -233,7 +233,7 @@ impl FnItem {
         } else {
             quote! {
                 ::std::result::Result::Ok(#call::#variant(call)) => {
-                    let (_, promise) = call.into_args_and_promise();
+                    let ((), promise) = call.into_args_and_promise();
                     handler.#ident(promise).await
                 }
             }

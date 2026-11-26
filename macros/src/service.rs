@@ -122,10 +122,10 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn add_references(references: &mut #krate::core::introspection::References) {
+                    fn add_references(references: &mut #krate::core::introspection::References<'_>) {
                         <#introspection as #krate::core::introspection::Introspectable>::add_references(
                             references,
-                        )
+                        );
                     }
                 }
             })
@@ -151,7 +151,7 @@ impl Service {
 
                 fn poll_next(
                     mut self: ::std::pin::Pin<&mut Self>,
-                    cx: &mut ::std::task::Context,
+                    cx: &mut ::std::task::Context<'_>,
                 ) -> ::std::task::Poll<::std::option::Option<Self::Item>> {
                     self.poll_next_event(cx)
                 }
@@ -270,10 +270,10 @@ impl Service {
                         <#introspection as #krate::core::introspection::Introspectable>::lexical_id()
                     }
 
-                    fn add_references(references: &mut #krate::core::introspection::References) {
+                    fn add_references(references: &mut #krate::core::introspection::References<'_>) {
                         <#introspection as #krate::core::introspection::Introspectable>::add_references(
                             references,
-                        )
+                        );
                     }
                 }
             })
@@ -299,7 +299,7 @@ impl Service {
 
                 fn poll_next(
                     mut self: ::std::pin::Pin<&mut Self>,
-                    cx: &mut ::std::task::Context,
+                    cx: &mut ::std::task::Context<'_>,
                 ) -> ::std::task::Poll<::std::option::Option<Self::Item>> {
                     self.poll_next_call(cx)
                 }

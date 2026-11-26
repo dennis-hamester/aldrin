@@ -70,7 +70,7 @@ impl StructData<'_> {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
                 fn deserialize(
-                    deserializer: #krate::Deserializer,
+                    deserializer: #krate::Deserializer<'_, '_>,
                 ) -> ::std::result::Result<Self, #krate::DeserializeError> {
                     let mut _deserializer = deserializer.deserialize_struct()?;
 
@@ -86,7 +86,6 @@ impl StructData<'_> {
                     }
 
                     _deserializer.finish_with(|_fallback| {
-                        #[allow(clippy::redundant_field_names)]
                         Ok(Self {
                             #(#field_finish),*
                         })
@@ -108,7 +107,7 @@ impl StructData<'_> {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
                 fn deserialize(
-                    deserializer: #krate::Deserializer,
+                    deserializer: #krate::Deserializer<'_, '_>,
                 ) -> ::std::result::Result<Self, #krate::DeserializeError> {
                     #body
                 }
@@ -148,13 +147,15 @@ impl FieldData<'_> {
 
     fn gen_deserialize_newtype(&self, krate: &Path) -> TokenStream {
         let ty = self.ty();
-        let name = self.name();
-        let var = self.var();
+        let map = if self.is_named() {
+            let var = self.var();
+            quote! { |#var| Self { #var } }
+        } else {
+            quote! { Self }
+        };
 
         quote! {
-            deserializer.deserialize::<#krate::tags::As<#ty>, _>().map(|#var| {
-                Self { #name: #var }
-            })
+            deserializer.deserialize::<#krate::tags::As<#ty>, _>().map(#map)
         }
     }
 
@@ -176,9 +177,12 @@ impl FieldData<'_> {
         if self.is_fallback() {
             quote! { #name: _fallback.into() }
         } else if self.is_optional() {
-            let var = self.var();
-
-            quote! { #name: #var }
+            if self.is_named() {
+                quote! { #name }
+            } else {
+                let var = self.var();
+                quote! { #name: #var }
+            }
         } else {
             let var = self.var();
 
@@ -209,7 +213,7 @@ impl EnumData<'_> {
             #[automatically_derived]
             impl<#(#lifetimes),*> #krate::Deserialize<Self> for #ty {
                 fn deserialize(
-                    deserializer: #krate::Deserializer,
+                    deserializer: #krate::Deserializer<'_, '_>,
                 ) -> ::std::result::Result<Self, #krate::DeserializeError> {
                     let deserializer = deserializer.deserialize_enum()?;
 

@@ -29,7 +29,6 @@ impl FnFallbackItem {
 
         quote! {
             #doc
-            #[allow(dead_code)]
             #variant(#ty),
         }
     }
