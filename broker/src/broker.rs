@@ -1657,7 +1657,7 @@ impl Broker {
             );
         };
 
-        if let Some(introspection) = entry.introspection() {
+        if let Some((introspection, version)) = entry.introspection() {
             send!(
                 self,
                 conn,
@@ -1665,6 +1665,7 @@ impl Broker {
                     serial: req.serial,
                     result: QueryIntrospectionResult::Ok(introspection.clone()),
                 },
+                version,
             )
         } else {
             entry.add_pending(id.clone(), req.serial);
@@ -1725,7 +1726,8 @@ impl Broker {
             return Ok(());
         };
 
-        if conn.version() < ProtocolVersion::V1_17 {
+        let version = conn.version();
+        if version < ProtocolVersion::V1_17 {
             return Err(());
         }
 
@@ -1735,7 +1737,10 @@ impl Broker {
             return Err(());
         };
 
-        let Some(res) = self.introspection.query_replied(*type_id.get(), id, req) else {
+        let Some(res) = self
+            .introspection
+            .query_replied(*type_id.get(), id, version, req)
+        else {
             #[cfg(feature = "statistics")]
             {
                 self.statistics.num_introspections = self.introspection.len();
@@ -1749,6 +1754,7 @@ impl Broker {
         match res {
             IntrospectionQueryResult::Available {
                 introspection,
+                version,
                 pending,
             } => {
                 for pending in pending {
@@ -1762,7 +1768,7 @@ impl Broker {
                         result: QueryIntrospectionResult::Ok(introspection.clone()),
                     };
 
-                    if send!(self, conn, msg).is_err() {
+                    if send!(self, conn, msg, version).is_err() {
                         state.push_remove_conn(pending.conn_id, false);
                     }
                 }

@@ -1,6 +1,6 @@
 use crate::conn_id::ConnectionId;
 use aldrin_core::message::{QueryIntrospectionReply, QueryIntrospectionResult};
-use aldrin_core::{SerializedValue, TypeId};
+use aldrin_core::{ProtocolVersion, SerializedValue, TypeId};
 use rand::RngExt;
 use rand::rngs::SmallRng;
 use std::collections::HashSet;
@@ -70,6 +70,7 @@ impl IntrospectionDatabase {
         &mut self,
         type_id: TypeId,
         conn_id: &ConnectionId,
+        version: ProtocolVersion,
         reply: QueryIntrospectionReply,
     ) -> Option<IntrospectionQueryResult<'_>> {
         let Entry::Occupied(mut entry) = self.entries.entry(type_id) else {
@@ -84,10 +85,11 @@ impl IntrospectionDatabase {
             QueryIntrospectionResult::Ok(introspection) => {
                 let entry = entry.into_mut();
                 let pending = entry.take_pending();
-                let introspection = entry.set_introspection(introspection);
+                let introspection = entry.set_introspection(introspection, version);
 
                 Some(IntrospectionQueryResult::Available {
                     introspection,
+                    version,
                     pending,
                 })
             }
@@ -111,7 +113,7 @@ impl IntrospectionDatabase {
 pub(crate) struct IntrospectionEntry {
     conn_id_idxs: HashMap<ConnectionId, usize>,
     conn_ids: Vec<ConnectionId>,
-    introspection: Option<SerializedValue>,
+    introspection: Option<(SerializedValue, ProtocolVersion)>,
     queried: Option<IntrospectionQuery>,
     pending: Vec<IntrospectionQuery>,
 }
@@ -159,8 +161,10 @@ impl IntrospectionEntry {
         }
     }
 
-    pub(crate) fn introspection(&self) -> Option<&SerializedValue> {
-        self.introspection.as_ref()
+    pub(crate) fn introspection(&self) -> Option<(&SerializedValue, ProtocolVersion)> {
+        self.introspection
+            .as_ref()
+            .map(|(introspection, version)| (introspection, *version))
     }
 
     pub(crate) fn queried(&self) -> Option<u32> {
@@ -200,9 +204,13 @@ impl IntrospectionEntry {
         }
     }
 
-    fn set_introspection(&mut self, introspection: SerializedValue) -> &SerializedValue {
+    fn set_introspection(
+        &mut self,
+        introspection: SerializedValue,
+        version: ProtocolVersion,
+    ) -> &SerializedValue {
         debug_assert!(self.introspection.is_none());
-        self.introspection.insert(introspection)
+        &self.introspection.insert((introspection, version)).0
     }
 
     fn take_pending(&mut self) -> Vec<IntrospectionQuery> {
@@ -226,6 +234,7 @@ impl IntrospectionQuery {
 pub(crate) enum IntrospectionQueryResult<'a> {
     Available {
         introspection: &'a SerializedValue,
+        version: ProtocolVersion,
         pending: Vec<IntrospectionQuery>,
     },
 
