@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Add `SerializedValueSlice::validate()` to validate the framing of a serialized value without
+  allocating or deserializing it.
+
 ### Fixed
 
 - `SerializedValue::empty()` now creates a valid serialized `()` (`ValueKind::None`) instead of an

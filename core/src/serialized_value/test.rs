@@ -1,8 +1,10 @@
-use super::SerializedValue;
+use super::{SerializedValue, SerializedValueSlice};
 use crate::tags::{PrimaryTag, Tag};
 use crate::{
-    Deserialize, DeserializeError, Deserializer, Serialize, SerializeError, Serializer, ValueKind,
+    Deserialize, DeserializeError, Deserializer, MAX_VALUE_DEPTH, Serialize, SerializeError,
+    Serializer, ValueKind,
 };
+use std::collections::HashMap;
 
 #[test]
 fn empty() {
@@ -123,5 +125,57 @@ fn concrete_vs_vague() {
             .unwrap()
             .deserialize()
             .unwrap()
+    );
+}
+
+#[test]
+fn validate() {
+    assert_eq!(SerializedValue::empty().validate(), Ok(()));
+    assert_eq!(
+        SerializedValue::serialize(42u32).unwrap().validate(),
+        Ok(())
+    );
+    assert_eq!(
+        SerializedValue::serialize(vec![1u32, 2, 3])
+            .unwrap()
+            .validate(),
+        Ok(())
+    );
+    assert_eq!(
+        SerializedValue::serialize(HashMap::<u32, String>::from_iter([(
+            u32::MAX,
+            "hello".to_owned(),
+        )]))
+        .unwrap()
+        .validate(),
+        Ok(())
+    );
+
+    assert_eq!(
+        SerializedValueSlice::new(&[]).validate(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+    assert_eq!(
+        SerializedValueSlice::new(&[255]).validate(),
+        Err(DeserializeError::InvalidSerialization)
+    );
+    assert_eq!(
+        SerializedValueSlice::new(&[ValueKind::U32.into(), 255, 1]).validate(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+    assert_eq!(
+        SerializedValueSlice::new(&[ValueKind::String.into(), 5, b'a']).validate(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+    assert_eq!(
+        SerializedValueSlice::new(&[ValueKind::None.into(), 0]).validate(),
+        Err(DeserializeError::TrailingData)
+    );
+
+    let mut too_deep = vec![ValueKind::Some.into(); MAX_VALUE_DEPTH as usize];
+    too_deep.push(ValueKind::None.into());
+    assert_eq!(
+        SerializedValueSlice::new(&too_deep).validate(),
+        Err(DeserializeError::TooDeeplyNested)
     );
 }

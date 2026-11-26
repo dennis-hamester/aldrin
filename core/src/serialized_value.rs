@@ -238,6 +238,17 @@ impl SerializedValueSlice {
         deserializer.peek_value_kind()
     }
 
+    pub fn validate(&self) -> Result<(), DeserializeError> {
+        let mut buf = &self.0;
+        Deserializer::new(&mut buf, 0)?.skip()?;
+
+        if buf.is_empty() {
+            Ok(())
+        } else {
+            Err(DeserializeError::TrailingData)
+        }
+    }
+
     pub fn deserialize_as<T: Tag, U: Deserialize<T>>(&self) -> Result<U, DeserializeError> {
         let mut buf = &self.0;
         let deserializer = Deserializer::new(&mut buf, 0)?;
