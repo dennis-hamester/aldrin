@@ -622,6 +622,63 @@ fn value_try_skip() {
 }
 
 #[test]
+fn value_try_skip_varint_le() {
+    use super::ValueBufExt;
+
+    let mut buf = &[0xfd][..];
+    buf.try_skip_varint_le::<2>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[254, 0xfe][..];
+    buf.try_skip_varint_le::<2>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff, 0xff][..];
+    buf.try_skip_varint_le::<2>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff][..];
+    assert_eq!(
+        buf.try_skip_varint_le::<2>(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+
+    let mut buf = &[0xfb][..];
+    buf.try_skip_varint_le::<4>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff, 0xff, 0xff, 0xff][..];
+    buf.try_skip_varint_le::<4>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff, 0xff, 0xff][..];
+    assert_eq!(
+        buf.try_skip_varint_le::<4>(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+
+    let mut buf = &[0xf7][..];
+    buf.try_skip_varint_le::<8>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff][..];
+    buf.try_skip_varint_le::<8>().unwrap();
+    assert_eq!(*buf, []);
+
+    let mut buf = &[255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff][..];
+    assert_eq!(
+        buf.try_skip_varint_le::<8>(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+
+    let mut buf = &[][..];
+    assert_eq!(
+        buf.try_skip_varint_le::<2>(),
+        Err(DeserializeError::UnexpectedEoi)
+    );
+}
+
+#[test]
 fn message_try_get_discriminant_u8() {
     use super::MessageBufExt;
 

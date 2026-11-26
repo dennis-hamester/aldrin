@@ -107,6 +107,8 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_get_varint_le<const N: usize>(&mut self) -> Result<[u8; N], DeserializeError> {
+        const { assert!(N > 0) };
+
         let mut bytes = [0; N];
 
         let first = self
@@ -143,6 +145,8 @@ pub(crate) trait ValueBufExt: Buf {
     }
 
     fn try_skip_varint_le<const N: usize>(&mut self) -> Result<(), DeserializeError> {
+        const { assert!(N > 0) };
+
         let first = self
             .try_get_u8()
             .map_err(|_| DeserializeError::UnexpectedEoi)?;

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `SerializedValue::empty()` now creates a valid serialized `()` (`ValueKind::None`) instead of an
   uninitialized empty buffer, preventing panics when dereferencing or deserializing it.
+- Fix skipping multi-byte varint integer keys (`u16`, `i16`, `u32`, `i32`, `u64`, `i64`) in maps and
+  sets.
 
 ## [0.15.0] - 2026-11-01
 

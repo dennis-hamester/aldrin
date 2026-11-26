@@ -901,6 +901,22 @@ fn test_u16_map() {
 }
 
 #[test]
+fn test_u16_map_multibyte_key() {
+    type Tag = tags::Map<tags::U16, tags::U8>;
+    let v1 = [21, 1, 255, 0xff, 0xff, 3, 4];
+    let v2 = [47, 1, 255, 0xff, 0xff, 3, 4, 0];
+
+    let value = HashMap::from_iter([(u16::MAX, 4)]);
+    assert_serde::<Tag, HashMap<u16, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::U16Map(HashMap::from_iter([(u16::MAX, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(u16::MAX, 4)]);
+    assert_serde::<Tag, BTreeMap<u16, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i16_map() {
     type Tag = tags::Map<tags::I16, tags::U8>;
     let v1 = [22, 1, 4, 3, 4];
@@ -913,6 +929,22 @@ fn test_i16_map() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
+    assert_serde::<Tag, BTreeMap<i16, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i16_map_multibyte_key() {
+    type Tag = tags::Map<tags::I16, tags::U8>;
+    let v1 = [22, 1, 255, 255, 255, 3, 4];
+    let v2 = [48, 1, 255, 255, 255, 3, 4, 0];
+
+    let value = HashMap::from_iter([(i16::MIN, 4)]);
+    assert_serde::<Tag, HashMap<i16, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::I16Map(HashMap::from_iter([(i16::MIN, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(i16::MIN, 4)]);
     assert_serde::<Tag, BTreeMap<i16, u8>, _, _>(&value, v1, v2);
 }
 
@@ -933,6 +965,22 @@ fn test_u32_map() {
 }
 
 #[test]
+fn test_u32_map_multibyte_key() {
+    type Tag = tags::Map<tags::U32, tags::U8>;
+    let v1 = [23, 1, 255, 0xff, 0xff, 0xff, 0xff, 3, 4];
+    let v2 = [49, 1, 255, 0xff, 0xff, 0xff, 0xff, 3, 4, 0];
+
+    let value = HashMap::from_iter([(u32::MAX, 4)]);
+    assert_serde::<Tag, HashMap<u32, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::U32Map(HashMap::from_iter([(u32::MAX, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(u32::MAX, 4)]);
+    assert_serde::<Tag, BTreeMap<u32, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i32_map() {
     type Tag = tags::Map<tags::I32, tags::U8>;
     let v1 = [24, 1, 4, 3, 4];
@@ -945,6 +993,22 @@ fn test_i32_map() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
+    assert_serde::<Tag, BTreeMap<i32, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i32_map_multibyte_key() {
+    type Tag = tags::Map<tags::I32, tags::U8>;
+    let v1 = [24, 1, 255, 255, 255, 255, 255, 3, 4];
+    let v2 = [50, 1, 255, 255, 255, 255, 255, 3, 4, 0];
+
+    let value = HashMap::from_iter([(i32::MIN, 4)]);
+    assert_serde::<Tag, HashMap<i32, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::I32Map(HashMap::from_iter([(i32::MIN, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(i32::MIN, 4)]);
     assert_serde::<Tag, BTreeMap<i32, u8>, _, _>(&value, v1, v2);
 }
 
@@ -965,6 +1029,26 @@ fn test_u64_map() {
 }
 
 #[test]
+fn test_u64_map_multibyte_key() {
+    type Tag = tags::Map<tags::U64, tags::U8>;
+    let v1 = [
+        25, 1, 255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 3, 4,
+    ];
+    let v2 = [
+        51, 1, 255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 3, 4, 0,
+    ];
+
+    let value = HashMap::from_iter([(u64::MAX, 4)]);
+    assert_serde::<Tag, HashMap<u64, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::U64Map(HashMap::from_iter([(u64::MAX, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(u64::MAX, 4)]);
+    assert_serde::<Tag, BTreeMap<u64, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i64_map() {
     type Tag = tags::Map<tags::I64, tags::U8>;
     let v1 = [26, 1, 4, 3, 4];
@@ -977,6 +1061,22 @@ fn test_i64_map() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeMap::from_iter([(2, 4)]);
+    assert_serde::<Tag, BTreeMap<i64, u8>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i64_map_multibyte_key() {
+    type Tag = tags::Map<tags::I64, tags::U8>;
+    let v1 = [26, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 3, 4];
+    let v2 = [52, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 3, 4, 0];
+
+    let value = HashMap::from_iter([(i64::MIN, 4)]);
+    assert_serde::<Tag, HashMap<i64, u8>, _, _>(&value, v1, v2);
+
+    let value = Value::I64Map(HashMap::from_iter([(i64::MIN, Value::U8(4))]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeMap::from_iter([(i64::MIN, 4)]);
     assert_serde::<Tag, BTreeMap<i64, u8>, _, _>(&value, v1, v2);
 }
 
@@ -1096,6 +1196,22 @@ fn test_u16_set() {
 }
 
 #[test]
+fn test_u16_set_multibyte_key() {
+    type Tag = tags::Set<tags::U16>;
+    let v1 = [31, 1, 255, 0xff, 0xff];
+    let v2 = [57, 1, 255, 0xff, 0xff, 0];
+
+    let value = HashSet::from_iter([u16::MAX]);
+    assert_serde::<Tag, HashSet<u16>, _, _>(&value, v1, v2);
+
+    let value = Value::U16Set(HashSet::from_iter([u16::MAX]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([u16::MAX]);
+    assert_serde::<Tag, BTreeSet<u16>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i16_set() {
     type Tag = tags::Set<tags::I16>;
     let v1 = [32, 1, 2];
@@ -1108,6 +1224,22 @@ fn test_i16_set() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
+    assert_serde::<Tag, BTreeSet<i16>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i16_set_multibyte_key() {
+    type Tag = tags::Set<tags::I16>;
+    let v1 = [32, 1, 255, 255, 255];
+    let v2 = [58, 1, 255, 255, 255, 0];
+
+    let value = HashSet::from_iter([i16::MIN]);
+    assert_serde::<Tag, HashSet<i16>, _, _>(&value, v1, v2);
+
+    let value = Value::I16Set(HashSet::from_iter([i16::MIN]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([i16::MIN]);
     assert_serde::<Tag, BTreeSet<i16>, _, _>(&value, v1, v2);
 }
 
@@ -1128,6 +1260,22 @@ fn test_u32_set() {
 }
 
 #[test]
+fn test_u32_set_multibyte_key() {
+    type Tag = tags::Set<tags::U32>;
+    let v1 = [33, 1, 255, 0xff, 0xff, 0xff, 0xff];
+    let v2 = [59, 1, 255, 0xff, 0xff, 0xff, 0xff, 0];
+
+    let value = HashSet::from_iter([u32::MAX]);
+    assert_serde::<Tag, HashSet<u32>, _, _>(&value, v1, v2);
+
+    let value = Value::U32Set(HashSet::from_iter([u32::MAX]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([u32::MAX]);
+    assert_serde::<Tag, BTreeSet<u32>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i32_set() {
     type Tag = tags::Set<tags::I32>;
     let v1 = [34, 1, 2];
@@ -1140,6 +1288,22 @@ fn test_i32_set() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
+    assert_serde::<Tag, BTreeSet<i32>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i32_set_multibyte_key() {
+    type Tag = tags::Set<tags::I32>;
+    let v1 = [34, 1, 255, 255, 255, 255, 255];
+    let v2 = [60, 1, 255, 255, 255, 255, 255, 0];
+
+    let value = HashSet::from_iter([i32::MIN]);
+    assert_serde::<Tag, HashSet<i32>, _, _>(&value, v1, v2);
+
+    let value = Value::I32Set(HashSet::from_iter([i32::MIN]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([i32::MIN]);
     assert_serde::<Tag, BTreeSet<i32>, _, _>(&value, v1, v2);
 }
 
@@ -1160,6 +1324,24 @@ fn test_u64_set() {
 }
 
 #[test]
+fn test_u64_set_multibyte_key() {
+    type Tag = tags::Set<tags::U64>;
+    let v1 = [35, 1, 255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+    let v2 = [
+        61, 1, 255, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0,
+    ];
+
+    let value = HashSet::from_iter([u64::MAX]);
+    assert_serde::<Tag, HashSet<u64>, _, _>(&value, v1, v2);
+
+    let value = Value::U64Set(HashSet::from_iter([u64::MAX]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([u64::MAX]);
+    assert_serde::<Tag, BTreeSet<u64>, _, _>(&value, v1, v2);
+}
+
+#[test]
 fn test_i64_set() {
     type Tag = tags::Set<tags::I64>;
     let v1 = [36, 1, 2];
@@ -1172,6 +1354,22 @@ fn test_i64_set() {
     assert_serde::<_, Value, _, _>(&value, v1, v2);
 
     let value = BTreeSet::from_iter([1]);
+    assert_serde::<Tag, BTreeSet<i64>, _, _>(&value, v1, v2);
+}
+
+#[test]
+fn test_i64_set_multibyte_key() {
+    type Tag = tags::Set<tags::I64>;
+    let v1 = [36, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255];
+    let v2 = [62, 1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0];
+
+    let value = HashSet::from_iter([i64::MIN]);
+    assert_serde::<Tag, HashSet<i64>, _, _>(&value, v1, v2);
+
+    let value = Value::I64Set(HashSet::from_iter([i64::MIN]));
+    assert_serde::<_, Value, _, _>(&value, v1, v2);
+
+    let value = BTreeSet::from_iter([i64::MIN]);
     assert_serde::<Tag, BTreeSet<i64>, _, _>(&value, v1, v2);
 }
 

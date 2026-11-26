@@ -131,7 +131,7 @@ impl KeyTagImpl for U16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -161,7 +161,7 @@ impl KeyTagImpl for I16 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -191,7 +191,7 @@ impl KeyTagImpl for U32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -221,7 +221,7 @@ impl KeyTagImpl for I32 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -251,7 +251,7 @@ impl KeyTagImpl for U64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
@@ -281,7 +281,7 @@ impl KeyTagImpl for I64 {
     }
 
     fn skip<B: Buf>(buf: &mut B) -> Result<(), DeserializeError> {
-        buf.try_skip_varint_le::<{ size_of::<Self>() }>()
+        buf.try_skip_varint_le::<{ size_of::<Self::Key<'_>>() }>()
     }
 
     fn convert(src: &mut &[u8], dst: &mut BytesMut) -> Result<(), ValueConversionError> {
